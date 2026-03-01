@@ -1,0 +1,168 @@
+PROJECT CONTEXT: Multi-Band mmWave SOLR Calibration using PNA-X + VDI Extenders
+
+INSTRUMENT:
+- Keysight PNA-X N5247B
+- External Hardware Setup → mmWave config enabled
+- VDI frequency extenders used for:
+    Band 2: 67–115 GHz (WR-10)
+    Band 3: 110–170 GHz (WR-6.5)
+- Baseband (0.01–67 GHz) direct PNA ports
+
+REFERENCE PLANE:
+- mTRL calibration performed using Infinity waveguide probes + ISS
+- mTRL sets reference plane at probe needle tips
+- THRU measured after mTRL does NOT include waveguide-CPW probe transitions
+- THRU contains only pad + via + 20 µm segment network
+
+SWEEP PARAMETERS (FIXED):
+
+Band 1 (0.01–67 GHz):
+    Points: 1601
+    IFBW: 3 kHz
+    Averaging: 10
+    Power at probe: -10 dBm
+    Sweep: Linear
+
+Band 2 (67–115 GHz, WR-10 VDI):
+    Points: 1001
+    IFBW: 7 kHz
+    Averaging: 16
+    Power at probe: -10 dBm
+    Sweep: Linear
+
+Band 3 (110–170 GHz, WR-6.5 VDI):
+    Points: 1471
+    IFBW: 15 kHz
+    Averaging: 20
+    Power at probe: -5 to -10 dBm
+    Sweep: Linear
+
+Stitching Overlap:
+    63–70 GHz
+    112–118 GHz
+
+IMPORTANT HARDWARE CONSTRAINTS:
+- Only ONE RF stimulus port active at a time (architecture limitation)
+- DO NOT toggle per-port RF OFF manually
+- LO remains active on both extenders when mmWave config is enabled
+- Source locking must use:
+    Stimulus → Source Port = 1 or 2
+    Auto Source = OFF
+- Do NOT use RF ON/OFF toggles for switch-term measurement
+
+------------------------------------------------------------
+PAD + VIA DE-EMBEDDING
+------------------------------------------------------------
+
+Goal: Extract embedding network E (probe-tip → pad → via → short line)
+
+Minimum required measurements:
+    THRU_forward.s2p
+        Stimulus: Port 1 locked
+        Traces: S11, S21
+
+    THRU_reverse.s2p
+        Stimulus: Port 2 locked
+        Traces: S22, S12
+
+Optional:
+    PAD_OPEN_Px.s1p
+    PAD_SHORT_Px.s1p
+
+De-embedding model:
+    THRU ≈ E * L_20um * E
+    If 20 µm electrically short:
+        E ≈ sqrtm(THRU)
+
+mTRL ensures:
+    Reference plane at probe tips
+    No probe transition included in THRU
+
+------------------------------------------------------------
+SWITCH CORRECTION (ΓF, ΓR)
+------------------------------------------------------------
+
+Use WAVE ratios, not S-parameters, for highest accuracy.
+
+Correct waves:
+    a1, b1, a2, b2
+Do NOT use:
+    a_ii
+    b_ij
+    raw receiver channels
+
+Definitions:
+    a_i = incident power wave at port i
+    b_i = reflected power wave at port i
+
+Forward switch term:
+    Stimulus locked to Port 1
+    Capture:
+        a2
+        b2
+    GammaF(f) = b2(f) / a2(f)
+
+Reverse switch term:
+    Stimulus locked to Port 2
+    Capture:
+        a1
+        b1
+    GammaR(f) = b1(f) / a1(f)
+
+Procedure:
+    Stimulus → Source Port = 1 (or 2)
+    Auto Source = OFF
+    DO NOT toggle RF OFF
+    Add wave traces (a2,b2) or (a1,b1)
+    Format = Real/Imag
+    Save CSV
+
+Files:
+    a2_forward.csv
+    b2_forward.csv
+    a1_reverse.csv
+    b1_reverse.csv
+
+------------------------------------------------------------
+SOLR WORKFLOW
+------------------------------------------------------------
+
+1) Perform mTRL
+2) Measure pad/via THRU (forward + reverse)
+3) Extract embedding network E
+4) De-embed S/O/L standards
+5) Measure wave ratios for ΓF and ΓR
+6) Apply switch correction:
+        S_corrected = SwitchCorrect(S_raw, GammaF, GammaR)
+7) Solve SOLR (ALS-based solver)
+8) Apply calibration to DUT
+
+------------------------------------------------------------
+KNOWN PITFALLS DISCOVERED
+------------------------------------------------------------
+
+- Turning RF OFF on idle port causes erratic S-parameters
+- Only lock stimulus via "Source Port", never via RF ON/OFF
+- Must capture waves in complex format (Real/Imag)
+- Must use same sweep settings for:
+    - THRU
+    - S/O/L
+    - ΓF/ΓR
+    - DUT
+- VDI extenders require LO stability; warm-up ≥30 min
+- Receiver auto-ranging can cause instability; consider manual range
+
+------------------------------------------------------------
+GOAL MOVING FORWARD
+------------------------------------------------------------
+
+Implement MATLAB workflow to:
+    - Import S2P and wave CSV files
+    - Compute GammaF and GammaR
+    - Perform switch correction
+    - Extract embedding E
+    - De-embed standards
+    - Solve multiport SOLR
+    - Support 3 stitched bands
+
+END CONTEXT
