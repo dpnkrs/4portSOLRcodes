@@ -1,0 +1,35 @@
+Phase I SOL Passivity Enforcement - 67-115 GHz band
+
+Target |Gamma| <= 0.999000
+Smoothing window on shrink factor = 7
+
+EXTRACTED_LOAD_P1_67_115
+  adjusted_points = 0
+  max_mag_raw = 0.175551749
+  max_mag_enforced = 0.175551749
+
+EXTRACTED_LOAD_P2_67_115
+  adjusted_points = 0
+  max_mag_raw = 0.231916887
+  max_mag_enforced = 0.231916887
+
+EXTRACTED_OPEN_P1_67_115
+  adjusted_points = 1001
+  max_mag_raw = 1.04859077
+  max_mag_enforced = 0.999
+
+EXTRACTED_OPEN_P2_67_115
+  adjusted_points = 0
+  max_mag_raw = 0.949468224
+  max_mag_enforced = 0.949468224
+
+EXTRACTED_SHORT_P1_67_115
+  adjusted_points = 1001
+  max_mag_raw = 1.06607345
+  max_mag_enforced = 0.999
+
+EXTRACTED_SHORT_P2_67_115
+  adjusted_points = 1001
+  max_mag_raw = 1.1112796
+  max_mag_enforced = 0.999
+

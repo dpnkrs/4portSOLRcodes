@@ -1,0 +1,8 @@
+Phase I Reflective Refinement Summary - 0-67 GHz band
+
+Mean |delta S11| = 0.0231378693
+Mean |delta S22| = 0.0173072662
+Mean short |Gamma|-1 reduction = 0.00607745791
+Mean open |Gamma|-1 reduction = 0.00384093952
+Mean load |Gamma| reduction = 0.0105635549
+Mean sigma_max change = -0.000564651334

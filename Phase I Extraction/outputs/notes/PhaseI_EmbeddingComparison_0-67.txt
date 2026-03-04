@@ -1,0 +1,7 @@
+Phase I Embedding Comparison - 0-67 GHz band
+
+Has P3P4 straight-thru comparison: 1
+Mean |S11(E12) - S11(E34)| = 0.0341404696
+Mean |S21(E12) - S21(E34)| = 0.0150786712
+Mean |S22(E12) - S22(E34)| = 0.0345764429
+Mean |sigma_max(E12) - sigma_max(E34)| = 0.0048254557

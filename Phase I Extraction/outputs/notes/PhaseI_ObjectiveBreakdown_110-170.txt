@@ -1,0 +1,18 @@
+Phase I Objective Breakdown - 110-170 GHz band
+
+Best alpha: 262.5 Np/m
+Best alpha: 0.002280075 dB/um
+Best eps_eff: 3.73
+Best Zc: 49 ohm
+
+Objective terms at optimum:
+open_short_passivity = 0.08675262
+open_short_target = 0.0882536015
+load_magnitude = 0.159648544
+straight_line_match = 0.0125915589
+straight_return_loss = 0.00753552929
+embedding_passivity = 0.0021788564
+alpha_regularization = 0.0025
+eps_regularization = 0.00075625
+zc_regularization = 0.04
+total_score = 11.2461958

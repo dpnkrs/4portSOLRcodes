@@ -1,0 +1,210 @@
+Table X (Revised): Measurement Checklist for Phase I Standard Extraction and Global Four-Port SOLR
+
+Port numbering: P1=W, P2=E, P3=N, P4=S
+Band naming convention:
+    Band 1 -> 0-67 GHz
+    Band 2 -> 67-115 GHz
+    Band 3 -> 110-170 GHz
+
+Raw measurement file naming convention:
+    <Standard>_P<Port #>_<Band>.s2p
+Examples:
+    Open_P1_0-67.s2p
+    Short_P3_67-115.s2p
+    Load_P4_110-170.s2p
+
+Reciprocal thru naming convention:
+    THRU_P<i>P<j>_<Geometry>_<Band>.s2p
+Examples:
+    THRU_P1P2_STRAIGHT_0-67.s2p
+    THRU_P1P3_ARC_67-115.s2p
+    THRU_P2P4_DIAG_110-170.s2p
+
+Switch-term / wave CSV naming convention:
+    SWTERM_P<stim>stim_P<recv>recv_<Band>.csv
+or, when captured with a specific reciprocal-thru dataset, use a matching prefix that identifies pair and geometry.
+
+Measured data drop location:
+    Measured Data\RawStandards
+
+--------------------------------------------------------------------------
+PHASE I - CALIBRATION STANDARD EXTRACTION FROM PROBE-TIP-CALIBRATED DATA
+--------------------------------------------------------------------------
+
+Objective:
+    Use probe-tip-calibrated measurements to extract de-embedded reference
+    standards for later four-port SOLR:
+        Gamma_short(f)
+        Gamma_open(f)
+        Gamma_load(f)
+        S_reciprocal(f) for each saved reciprocal-thru geometry
+
+Core modeling assumptions:
+    1. The straight de-embedding thru is symmetric:
+           THRU_meas(f) = E(f) * L_25.44um(f) * E(f)
+    2. The explicit line section is modeled with:
+           length = 25.44 um
+           eps_eff = 3.7245
+           Zc = 50 ohm (initial model)
+    3. One shared embedding network E(f) is extracted per band.
+    4. Reciprocal standards are saved as full 2-port de-embedded S-parameters.
+
+A. Instrument-side calibration to probe tips
+
+| Step | Measurement / Action                                                                 | Required per Band | Output                                              |
+| ---- | ------------------------------------------------------------------------------------ | ----------------: | --------------------------------------------------- |
+| A1   | Apply instrument calibration such that exported measurements are referenced to probe tips |               Yes | Probe-tip reference plane for all exported datasets |
+
+B. Straight-thru measurement for embedding extraction
+
+| Measurement Type | Minimum Quantity | Required per Band | Purpose / Output                                              |
+| ---------------- | ---------------: | ----------------: | ------------------------------------------------------------- |
+| P1-P2 straight thru |            >=1 |               Yes | Primary embedding extraction measurement for the band         |
+| P3-P4 straight thru |            >=1 |       Recommended | Cross-check that the shared-per-band embedding is consistent |
+
+Output:
+    Extract embedding network E(f) per band using:
+        THRU_meas(f) = E(f) * L_25.44um(f) * E(f)
+
+C. Standard extraction from probe-tip-calibrated measurements
+
+| Standard | Scope                        | Required per Band | Raw Input Example        | Extracted Output                  |
+| -------- | ---------------------------- | ----------------: | ------------------------ | --------------------------------- |
+| Short    | per port                     |               Yes | Short_P1_0-67.s2p        | Gamma_short,P1(f)                |
+| Open     | per port                     |               Yes | Open_P1_0-67.s2p         | Gamma_open,P1(f)                 |
+| Load     | per port                     |               Yes | Load_P1_0-67.s2p         | Gamma_load,P1(f)                 |
+
+Notes:
+    1. Raw files are stored as .s2p even when only the driven-port reflection is meaningful.
+    2. One copy of E(f) is removed from each measured SOL standard.
+    3. Extracted standards are saved per band as both:
+           - Touchstone output
+           - MATLAB .mat output
+
+D. Reciprocal standard extraction from probe-tip-calibrated measurements
+
+| Port Pair | Geometry        | Required per Band | Raw Input Example              | Extracted Output                  |
+| --------- | --------------- | ----------------: | ------------------------------ | --------------------------------- |
+| P1-P2     | Straight        |               Yes | THRU_P1P2_STRAIGHT_0-67.s2p    | Full de-embedded 2-port S(f)     |
+| P3-P4     | Straight        |               Yes | THRU_P3P4_STRAIGHT_0-67.s2p    | Full de-embedded 2-port S(f)     |
+| P1-P3     | Arc or Diag     |               Yes | THRU_P1P3_ARC_0-67.s2p         | Full de-embedded 2-port S(f)     |
+| P1-P4     | Arc or Diag     |               Yes | THRU_P1P4_DIAG_0-67.s2p        | Full de-embedded 2-port S(f)     |
+| P2-P3     | Arc or Diag     |               Yes | THRU_P2P3_ARC_0-67.s2p         | Full de-embedded 2-port S(f)     |
+| P2-P4     | Arc or Diag     |               Yes | THRU_P2P4_DIAG_0-67.s2p        | Full de-embedded 2-port S(f)     |
+
+Recommended:
+    Measure both ARC and DIAG for orthogonal pairs when available to support
+    hold-out validation after extraction.
+
+E. Phase I saved outputs
+
+Save extracted outputs per band under a processed-data location with both:
+    1. Touchstone files
+    2. MATLAB .mat files
+
+Minimum saved outputs per band:
+    EXTRACTED_SHORT_P1_<Band>
+    EXTRACTED_OPEN_P1_<Band>
+    EXTRACTED_LOAD_P1_<Band>
+    EXTRACTED_SHORT_P2_<Band>
+    EXTRACTED_OPEN_P2_<Band>
+    EXTRACTED_LOAD_P2_<Band>
+    EXTRACTED_SHORT_P3_<Band>
+    EXTRACTED_OPEN_P3_<Band>
+    EXTRACTED_LOAD_P3_<Band>
+    EXTRACTED_SHORT_P4_<Band>
+    EXTRACTED_OPEN_P4_<Band>
+    EXTRACTED_LOAD_P4_<Band>
+    EXTRACTED_THRU_P1P2_STRAIGHT_<Band>
+    EXTRACTED_THRU_P3P4_STRAIGHT_<Band>
+    EXTRACTED_THRU_P1P3_<Geometry>_<Band>
+    EXTRACTED_THRU_P1P4_<Geometry>_<Band>
+    EXTRACTED_THRU_P2P3_<Geometry>_<Band>
+    EXTRACTED_THRU_P2P4_<Geometry>_<Band>
+    EXTRACTED_EMBEDDING_<Band>.mat
+
+--------------------------------------------------------------------------
+PHASE II - GLOBAL FOUR-PORT SOLR IN FINAL FOUR-PROBE GEOMETRY
+--------------------------------------------------------------------------
+
+F. Instrument-side calibration state confirmation
+
+| Step | Measurement / Action                                    | Required per Band | Purpose                                                               |
+| ---- | ------------------------------------------------------- | ----------------: | --------------------------------------------------------------------- |
+| F1   | Confirm calibration correction ON and correct cal set active |           Yes | Ensures exported S-parameters use the intended probe-tip reference plane |
+
+G. Switch-term / wave-trace recording requirements
+
+G1. Anchor switch-term set
+
+| Thru Used        | Stimulus Port | Record Receiver Waves | Save As                               |
+| ---------------- | ------------: | --------------------- | ------------------------------------- |
+| P1-P2 straight   |            P1 | a2(f), b2(f)          | SWTERM_P1stim_P2recv_<Band>           |
+| P1-P2 straight   |            P2 | a1(f), b1(f)          | SWTERM_P2stim_P1recv_<Band>           |
+| P3-P4 straight   |            P3 | a4(f), b4(f)          | SWTERM_P3stim_P4recv_<Band>           |
+| P3-P4 straight   |            P4 | a3(f), b3(f)          | SWTERM_P4stim_P3recv_<Band>           |
+
+G2. Wave recording during every reciprocal-thru measurement
+
+Requirement:
+    For every reciprocal-thru dataset used in the global solve, save:
+        1. S-parameters
+        2. Receiver waves for both stimulus directions of the active pair
+
+Operational rule:
+    When stimulating port i, record at least a_j and b_j at the receive port j.
+    When stimulating port j, record at least a_i and b_i at the receive port i.
+
+This allows computing pair-specific switch ratios:
+    Gamma_i->j(f) proportional to b_j(f) / a_j(f)
+    Gamma_j->i(f) proportional to b_i(f) / a_i(f)
+
+H. SOL measurements in the final 4-probe geometry
+
+| Port | Direction | Measurements      | Required per Band | Purpose                           |
+| ---- | --------- | ----------------- | ----------------: | --------------------------------- |
+| P1   | West      | Short, Open, Load |               Yes | Solve port-1 reflection terms     |
+| P2   | East      | Short, Open, Load |               Yes | Solve port-2 reflection terms     |
+| P3   | North     | Short, Open, Load |               Yes | Solve port-3 reflection terms     |
+| P4   | South     | Short, Open, Load |               Yes | Solve port-4 reflection terms     |
+
+Reference standards used here:
+    The extracted Phase I standards are the reference definitions for the
+    later global four-port SOLR solve.
+
+I. Reciprocal thru measurements for the global solve
+
+I1. Straight reciprocal thrus - Required
+| Port Pair | Physical Pair | Geometry | Required per Band | Data to Save     |
+| --------- | ------------- | -------- | ----------------: | ---------------- |
+| P1-P2     | W-E           | Straight |               Yes | S-params + waves |
+| P3-P4     | N-S           | Straight |               Yes | S-params + waves |
+
+I2. Orthogonal reciprocal thrus - Required
+| Port Pair | Physical Pair | Geometry        | Required per Band | Data to Save     |
+| --------- | ------------- | --------------- | ----------------: | ---------------- |
+| P1-P3     | W-N           | Arc or Diag     |               Yes | S-params + waves |
+| P1-P4     | W-S           | Arc or Diag     |               Yes | S-params + waves |
+| P2-P3     | E-N           | Arc or Diag     |               Yes | S-params + waves |
+| P2-P4     | E-S           | Arc or Diag     |               Yes | S-params + waves |
+
+I3. Alternate geometry for orthogonal pairs - Recommended
+
+Measure the alternate geometry, ARC and DIAG, when available so one geometry
+can be held out for validation.
+
+J. Replica and repeatability measurements - Recommended
+
+| Measurement Type    | Recommended Amount              | Purpose                        |
+| ------------------- | ------------------------------: | ------------------------------ |
+| SOL replicas        | >=2 per standard, subset acceptable | touchdown repeatability    |
+| Thru replicas       | >=2 for selected pairs/geometries  | residual diagnostics       |
+| Re-touchdown repeat | >=1 per band                       | quantify drift/contact changes |
+
+K. DUT verification measurement after SOLR
+
+| DUT           | Measurement              | Required per Band | Purpose                         |
+| ------------- | ------------------------ | ----------------: | ------------------------------- |
+| Lange coupler | Full 4-port S, 16 terms  |               Yes | Validate global SOLR correction |
+
+End of revised table.

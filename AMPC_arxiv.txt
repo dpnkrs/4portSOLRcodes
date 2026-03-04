@@ -1,0 +1,183 @@
+D. Shakya, T. S. Rappaport, E. Shieh, M. E. Knox, H. Rahmani, D. Shahrjerdi, M. Ying, K. Fan, M. Lu, A. Rumiantsev, V. Mallette, G.
+Fisher, G. De Chirico, P. Ghate, and S. McMahon, “Four-Port Probe Stations and SOLR Calibration Standard Design up to 125 GHz on 28
+nm CMOS", (Accepted) IEEE Asia Pacific Microwave Conference, South Korea, Dec. 2025, pp. 1–3.
+
+ Four-Port Probe Stations and SOLR Calibration Standard Design up to
+                      125 GHz on 28 nm CMOS
+   Dipankar Shakya#1 , Theodore S. Rappaport#2 , Ethan Shieh#3 , Michael E. Knox#4 , Hamed Rahmani#5 ,
+        Davood Shahrjerdi#6 , Mingjun Ying#7 , Kimberley Fan*1 , Matt Lu*2 , Andrej Rumiantsev*3 ,
+       Vince Mallette*4 , Gavin Fisher^1 ,Giancarlo De Chirico^2 , Pratik Ghate^3 , Shean McMahon^4
+                             #
+                               NYU WIRELESS, New York University, USA
+                                                *
+                                                  MPI Corporation
+                                           ^
+                                             FormFactor Incorporated
+                 {#1 dshakya, #2 tsr, #3 es5185, #4 mikeknox, #5 hr926, #6 davood}@nyu.edu
+
+    Abstract — This paper presents two innovative four-port          multiple-input multiple-output (MIMO) transceivers and
+probe stations developed by FormFactor Incorporated (FFI) and        multi-band carrier aggregation systems, can contain several RF
+MPI Corporation (MPI), and a four-port calibration standard          chains that require simultaneous probing to assess phase shifts
+design up to 125 GHz for the probe stations. True four-port
+probing at mmWave and beyond does not yet exist, but is              and inter-chain leakage/coupling [2]. Four-port probing allows
+anticipated for future multi-band wireless devices using several     faster and more accurate simultaneous measurements between
+antennas and RF chains. The four-port probe stations are             RF chains without repositioning probes. Moreover, with
+housed in the THz measurement facility at NYU and allow              four-port probing, devices such as couplers and quadrature
+simultaneous probing from East, West, North, and South               mixers are characterized in a single measurement with
+orientations, which presents challenges for calibration. An
+on-chip Short-Open-Load-Reciprocal (SOLR) calibration (cal)          complete four-port S-parameters captured.
+standard is designed leveraging UMC’s 28 nm CMOS process.                Several Vector Network Analyzer (VNA) cal techniques
+S/O/L standard S-parameters are extracted using a virtual            have been developed to accurately set the measurement
+multiline Thru-Reflect-Line (mTRL) cal and used to validate          reference plane for traditional two-port probe station
+SOLR cal performance via simulations up to 125 GHz. The              measurements.       Short-Open-Load-Thru       (SOLT)      and
+novel probing solutions from MPI and FFI, along with the
+SOLR cal, open up considerable opportunities for precise RF          Thru-Reflect-Line (TRL) cal using off-chip impedance
+characterization across wide frequency ranges.                       standard substrates (ISS) are considered reliable at lower
+    Keywords — 28 nm, probe station, CMOS, SOLR, THz.                frequencies (typically below 20 GHz [3]). mTRL is commonly
+                                                                     adopted to extend the two-port cal up to hundreds of GHz
+                      I. I NTRODUCTION                               leveraging the redundancy of multiple Line standards [4], [5].
+    In the rapidly evolving landscape of wireless                    However, the SOLR cal for orthogonal ports, though practiced
+communication, the millimeter-wave (mmW) (30-300 GHz),               for several years [6], have been limited to below 26 GHz [7].
+sub-THz (100-300 GHz) and THz (0.3-3 THz) spectrum                       Paper organization is as follows: Section II introduces the
+presents a new frontier with the potential to enhance the            two four-port probe stations developed independently by MPI
+capacity, speed, and diversity of wireless applications [1]. At      and FFI. Section III discusses an SOLR cal design up to 125
+these mmW and THz bands, where short wavelengths and                 GHz in UMC 28 nm CMOS. Section IV presents the SOLR
+modern semiconductor nodes support massive numbers of                cal performance before concluding.
+antennas and RF chains, including devices such as multi-band
+                                                                                II. T HE F OUR -P ORT P ROBE S TATION
+multi-output mixers and amplifiers, advanced equipment
+calibration (cal) and measurement techniques are essential.          The THz Measurement Facility (THz Lab)
+This paper presents the first commercial four-port probe                 The THz Lab is a multiuser lab at NYU WIRELESS
+stations for simultaneous measurements across four ports             established by the National Science Foundation (NSF) in 2022
+from DC to 500 GHz established at the THz Measurement                that enables measurements of devices, circuits, materials, and
+facility in NYU WIRELESS [2]. Moreover, a novel SOLR                 radio channels from DC to 500 GHz [2].
+cal design to enable measurements on the four-port probe                 The THz Lab employs a Keysight N5247B PNA-X network
+station up to 125 GHz is presented.                                  analyzer with a N5292A test-set controller to enable four-port
+    Traditionally, two or three-port RF probe stations have          S-parameter measurements. Banded waveguide frequency
+sufficed for on-chip measurements. However, advances in              extenders from Virginia Diodes, Inc. (VDi) are used with
+wireless communications provide compelling reasons for the           the PNA-X to enable frequency-swept measurements from
+widespread adoption of four-port probe stations. Particularly,       DC to 500 GHz. FFI’s Infinity waveguide probes with a
+                                                                     ground-signal-ground (GSG) configuration are used in the THz
+  This work is supported by NSF MRI grant 2216332 and NYU WIRELESS
+Industrial Affiliates Program                                        Lab for the VDi frequency extenders [2], [8].
+A. The FormFactor Four-Port Probe Station                                      as the North-East or South-West. Difficulty arises due to
+    The FFI manual four-port probe station is engineered based                 the requirement of a non-ideal Thru standard to connect
+on the EPS-200 mmW probing platform (Fig. 1). This station                     the orthogonal ports during cal. The non-ideal Thru inhibits
+incorporates a synthesis of FFI’s distinctive 45-degree angled                 useful application of any error correction technique that needs
+positioners on the East, West, and South orientations, with the                well-defined Thru or Line standards, such as SOLT or TRL
+traditional flat positioner in the North. To accommodate the                   [6], [9].
+North positioner and frequency extender, the bridge supporting                 1) Viability of SOLR calibration
+the microscope is elevated. The station utilizes a vacuum-based
+                                                                                    The SOLR methodology for on-wafer cal appears as a
+chuck incorporating movement control mechanisms that permit
+                                                                               viable approach for calibrating orthogonal port configurations
+constrained linear motion in either the X or Y axes, or
+                                                                               [6]. The SOLR requires three fully known one-port standards
+unrestricted movement across both axes.
+                                                                               at each port, namely, Short-Open-Load (SOL), with one
+                                                                               unknown reciprocal standard between any two VNA ports to
+                                                                               determine error terms of the underlying eight-term error model
+                                                                               [10]. The reciprocity, S12 = S21, and low signal loss are
+                                                                               the only requirements for the reciprocal standard [11]. The
+                                                                               calibration quality is subject to the quality of the one-port
+                                                                               standard definitions available to the VNA [11], [12]. These
+                                                                               standards, however, could be characterized with a polynomial
+                                                                               fit established via alternative cal like the mTRL derived from
+                                                                               straight Thru standards [13].
+                                                                               2) Calibration Standard Design on UMC 28 nm CMOS
+                                                                                   Advanced semiconductor processes such as CMOS and
+Fig. 1. Formfactor Inc. design of the four-port probing solution. Design       RF-SOI, at sub-micron technology nodes (e.g., 130 nm or
+includes three angled positioners and one flat North positioner.               28 nm) are preferred for fabricating mmW and sub-THz
+B. The MPI Four-Port Probe Station                                             transceivers considering cost, fT/fmax, noise performance, etc.
+                                                                               [2], [4]. While off-chip ISS are available to implement various
+    The MPI design evolves from the TS200-THZ 200 mm                           cal techniques, on-chip cal standards fabricated on the same
+mmW, THz, and load pull probe station (Fig. 2). This design                    wafer or die as the device achieve the highest accuracy and
+allows direct connection of any VDi frequency extender to the                  repeatability, especially as frequencies extend into mmW and
+probe across all four orientations: East/West, or North/South,                 sub-THz range. On-chip standards allow the measurement
+and eliminates S-bends or additional waveguides, significantly                 reference plane to be moved closest to the device, while also
+reducing losses and maximizing the signal power and system                     accounting for influences of the process dielectric stackup [9].
+directivity. The scope bridge is raised for ease of access to                      Calibration standards for an SOLR cal are taped-out on the
+controls. The MPI air-bearing stage, with single-handed puck                   UMC 28 nm CMOS process [14]. A nine metal layer stackup
+control, enables fast unrestricted XY navigation and quick                     with Aluminum (Al) landing pads is used for the 4 mm × 4
+wafer loading. Additionally, a safety lock restricts all chuck                 mm die size. Calibration structures are fabricated on the top
+movement at the platen’s lowest probe contact position.                        metal layer (M9) and a composite ground with M2 and M1 at
+                                                                               the bottom is used. Simulations are carried out replicating the
+                                                                               stackup in Ansys HFSS as per UMC documentation.
+                                                                                   Pad size and geometry are optimized (35 µm × 55 µm)
+                                                                               to minimize parasitic capacitance and resistance for GSG
+                                                                               probing, while adhering to FFI and UMC design rules [9],
+                                                                               [15]. The taped-out die is shown in Fig. 3 with one-port
+                                                                               SOL standards along each die edge and Reciprocal orthogonal
+                                                                               Thrus at the corners. Two types of orthogonal Thrus are
+                                                                               implemented: an arc to avoid sharp bends, and diagonal with
+                                                                               45◦ bends. Total four replica sets of the SOLR cal, including
+                                                                               both arc and diagonal Thrus, are fabricated on the die.
+                                                                                   A microstrip line with an optimized length (55 µm) and
+Fig. 2. MPI Corporation design for the four-port probing platform. Zoomed-in   width (2 µm) on M9 is implemented between the pad and each
+views show direct mounting of waveguide probes onto frequency extenders.
+                                                                               standard to maximize the calibration frequency range. A 50 Ω
+  III. C ALIBRATION OF THE FOUR - PORT PROBE STATIONS                          poly-silicon metal gate resistor serves as the Load standard,
+   A critical aspect for the four-port probe station                           with an additional 45 µm tuning line on M8 improving its
+implementation is the calibration of orthogonal ports such                     performance. Consistent M9 microstrip lines on all standards
+                                                                                 Fig. 5. Error correction results on diagonal Thru DUT: (a) |S21 | (< 1.5 dB) ;
+                                                                                 (b) ̸ S21 . S,O,L standards evaluated w/ virtual mTRL (solid-blue line). Ideal
+                                                                                 standards used (dotted-black line). Raw uncorrected (dashed-red line)
+Fig. 3. Simplified layout of the taped-out 4 mm × 4 mm SOLR cal chip. SOL
+standards line the die edges. Arced Thru (R) standard at corners. Diagonal
+                                                                                                            V. C ONCLUSION
+and straight Thrus at chip center. Four SOLR cal set replicas included               This paper highlights two innovative four-port probe
+move the measurement plane at the line’s end after calibration.                  stations for simultaneous four-quadrant probing developed
+Reciprocal standards are implemented using straight, arc, and                    independently by MPI Corporation and FormFactor
+diagonal Thru lines for connecting orthogonal ports.                             Incorporated. Further, an on-chip four-port SOLR calibration
+                                                                                 standard is presented for the probe stations that is taped-out
+      IV. P ERFORMANCE R ESULTS OF THE SOLR CAL                                  on UMC’s 28 nm CMOS process. Simulation of the SOLR
+    The SOLR cal standards for four-port probe station                           routine exhibit cal validity up to 125 GHz based on a -15
+calibration simulated in HFSS demonstrate robust performance                     dB threshold on Load |S11 |. The four-port probing systems
+up to 125 GHz. The Open standard consistently maintains an                       at the NYU THz Lab along with the 125 GHz SOLR cal is
+|S11 | response above -0.18 dB up to 170 GHz, with capacitive                    a critical component for fast and accurate characterization of
+arcing behavior on the Smith chart as frequency increases.                       next-generation multiport circuits and transceivers at mmW
+Similarly, Short standard |S11 | response remains above -0.7 dB                  and sub-THz without repositioning probes.
+up to 170 GHz, showing the anticipated inductive arc on the                                                    R EFERENCES
+Smith chart (Fig. 4). The phase response of the two standards
+                                                                                  [1] T. S. Rappaport et al., “Wireless Communications and Applications
+shows ∼180◦ phase difference across D-band.                                           Above 100 GHz: Opportunities and Challenges for 6G and Beyond,”
+    The Load standard exhibits an |S11 | response below -15                           IEEE Access, vol. 7, pp. 78 729–78 757, 2019.
+dB up to 125 GHz, which is employed as the threshold                              [2] D. Shakya et al., “Exploring Millimeter-Wave and Terahertz Circuits
+                                                                                      and Systems With a Novel Multiuser Measurement Facility: Multiuser
+for establishing cal performance [7]. All three Thru lines                            Terahertz Measurement Facility (THz Lab),” IEEE Mcrwv Mag, vol. 25,
+consistently meet the reciprocity requirement (|S21 | = |S12 |).                      no. 2, pp. 68–79, 2024.
+                                                                                  [3] J. Stenarson and K. Yhland, “A new assessment method for the residual
+                                                                                      errors in SOLT and SOLR calibrated VNAs,” in ARFTG, 2007, pp. 1–6.
+                                                                                  [4] A. Rumiantsev, S. L. Sweeney, and P. L. Corson, “Comparison
+                                                                                      of on-wafer multiline TRL and LRM+ calibrations for RF CMOS
+                                                                                      applications,” in 72nd ARFTG, 2008, pp. 132–136.
+                                                                                  [5] V. Krozer et al., “On-wafer small-signal and large-signal measurements
+                                                                                      up to sub-THz frequencies,” in 2014 IEEE BCTM, 2014, pp. 163–170.
+                                                                                  [6] S. Basu and L. Hayden, “An SOLR calibration for accurate measurement
+                                                                                      of orthogonal on-wafer DUTs,” in IEEE IMS Digest, vol. 3, 1997, pp.
+                                                                                      1335–1338 vol.3.
+                                                                                  [7] J. E. Daniel, “Development of enhanced multiport network analyzer
+                  (a)                                  (b)                            calibrations using non-ideal standards,” Master’s thesis, University of
+Fig. 4. Simulated plots of s-parameters for the SOLR cal: (a) S11 impedance           South Florida, 2005.
+of Open, Short, and Load; (b) |S11 | of Load (left Y-axis); |S11 | of Open and    [8] A. Rumiantsev and R. Doerner, “RF Probe Technology: History and
+Short, |S21 | of Orthogonal Thru (right Y-axis).                                      Selected Topics,” IEEE Mcrwv Mag., vol. 14, no. 7, pp. 46–58, 2013.
+                                                                                  [9] A. Rumiantsev, On-Wafer calibration techniques enabling accurate
+    Error correction simulations following the SOLR routine                           characterization of high-performance silicon devices at the mm-wave
+[7] to solve the underlying eight-term error model were                               range and beyond. CRC Press, 2022.
+                                                                                 [10] D. Rytting, “Network analyzer error models and calibration methods,”
+completed, employing the simulated s-parameters for the                               in 54th ARFTG, 2000, pp. 1–44.
+Short, Open, Load, and orthogonal arc Thru standards. A                          [11] N. Shoaib, Vector network analyzer (VNA) measurements and
+virtual mTRL calibration of the HFSS standard models, based                           uncertainty assessment. Springer, 2017.
+                                                                                 [12] A. Rumiantsev and N. Ridler, “VNA calibration,” IEEE Mcrwv mag,
+on [16], characterized the standards’ s-parameters for the                            vol. 9, no. 3, pp. 86–99, 2008.
+SOLR routine, removing effects of the pads and microstrip                        [13] U. Arz, G. N. Phung, and A. Rumiantsev, “Traceable lumped-element
+lines. The raw-simulated and corrected |S21 | magnitude and                           calibrations up to 110 GHz on commercial calibration substrates,” in
+                                                                                      ARFTG-100, 2023, pp. 1–4.
+phase behaviors for the diagonal Thru used as the DUT                            [14] UMC. (2021) Mixed-Signal/ RFCMOS Brochure. [Online]. Available:
+are presented in Fig. 5. Corrected (solid-blue) traces show                           https://www.umc.com/upload/media/05_Press_Center/3_Literatures/
+improved orthogonal Thru behavior with |S21 | magnitude                               Process_Technology/RFCMOS_Brochure.pdf
+                                                                                 [15] Q. Wang et al., “The GSG-PAD layout optimization for test-key of
+below 1.5 dB. Likewise, ̸ S21 indicates reduced electrical                            mm-Wave devices,” in 2019 CSTIC. IEEE, 2019, pp. 1–4.
+length, showing a slower linear phase change from DC to 170                      [16] Z. Hatab, M. Gadringer, and W. Bösch, “Improving the reliability of the
+GHz, as pads and M9 lines are de-embedded.                                            multiline TRL calibration algorithm,” in ARFTG-98, 2022, pp. 1–5.
+

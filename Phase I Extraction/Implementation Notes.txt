@@ -1,0 +1,185 @@
+Phase I Extraction Implementation Notes
+
+This note summarizes the implementation decisions and math discussed during
+review of the Phase I extraction code.
+
+1. Embedding extraction from the straight thru
+
+The working model is:
+
+    THRU_meas(f) = E(f) * L(f) * E(f)
+
+where:
+    E(f) = embedding half-network from probe tip to the standard plane
+    L(f) = explicit uniform line model for the straight thru center segment
+
+For Phase I:
+    line length = 25.44 um
+    eps_eff = 3.7245
+    Zc = 50 ohm
+    alpha = 0 initially
+
+The extraction steps are:
+
+    T_thru(f) = ABCD(THRU_meas(f))
+    T_line(f) = ABCD(L(f))
+    T_half_squared(f) = T_thru(f) / T_line(f)
+    T_E(f) = expm(0.5 * logm(T_half_squared(f)))
+
+The current implementation uses a matrix-log / matrix-exp half-factor:
+
+    T_E = expm(0.5 * logm(T_half_squared))
+
+This plays the same conceptual role as a matrix square root, but it often
+behaves more smoothly numerically than a direct sqrtm() evaluation.
+
+The key ambiguity is that the matrix half-factor still has two global sign
+choices:
+
+    T_E
+    -T_E
+
+Both satisfy:
+
+    T_E * T_E = (-T_E) * (-T_E) = T_half_squared
+
+For the first frequency point, the code takes the principal branch returned
+by the matrix logarithm/exponential evaluation. There is no separate sign
+decision made at the first point because there is no prior sample to
+compare against.
+
+For all later frequency points, the code resolves the sign ambiguity by
+continuity:
+
+    if norm(previousRoot - tRoot, 'fro') > norm(previousRoot + tRoot, 'fro')
+        tRoot = -tRoot;
+    end
+
+This means:
+    - compare the newly computed root to the previous frequency sample
+    - also compare the negated version
+    - keep whichever one gives the smaller jump in Frobenius norm
+
+Justification:
+    - physically, the embedding network should vary smoothly with frequency
+    - the sign ambiguity is artificial, introduced by the matrix halving
+    - continuity is the standard practical way to choose the branch
+
+Important note:
+    The global sign of E does not change the final two-sided de-embedding:
+
+        inv(-E) * M * inv(-E) = inv(E) * M * inv(E)
+
+so anchoring the first point to the principal sqrtm() root is acceptable
+for this workflow.
+
+2. One-port de-embedding
+
+The measured one-port standard is modeled as the embedding network E
+terminated by the actual standard reflection Gamma_actual.
+
+Let the S-parameters of E be:
+
+    [ s11  s12 ]
+    [ s21  s22 ]
+
+Then the measured reflection at the probe-tip side is:
+
+    Gamma_meas = s11 + (s12*s21*Gamma_actual) / (1 - s22*Gamma_actual)
+
+This is the standard loaded two-port reflection formula.
+
+Solving for Gamma_actual gives:
+
+    Delta = Gamma_meas - s11
+    Gamma_actual = Delta / (s12*s21 + s22*Delta)
+
+That is exactly what deembed_oneport_standard.m implements.
+
+Interpretation:
+    - remove the direct front-face reflection term s11
+    - divide out the transmission/loading of the embedding
+    - recover the reflection coefficient at the standard plane
+
+3. Two-port de-embedding
+
+For a reciprocal standard or thru measured through the same embedding on
+both sides:
+
+    T_meas = T_E * T_actual * T_E
+
+Therefore:
+
+    T_actual = inv(T_E) * T_meas * inv(T_E)
+
+In MATLAB this is implemented as:
+
+    tActual = tEmbedding \ tMeasured / tEmbedding;
+
+where:
+    A \ B means solve A*X = B, which is numerically preferable to inv(A)*B.
+
+4. ABCD conversion versus chain-scattering conversion
+
+The original helper mistakenly used the formula:
+
+    T = (1 / S21) * [det(S), S11; -S22, 1]
+
+That is not the standard equal-reference-impedance ABCD conversion.
+It is the wave-chain / chain-scattering form often used for cascade work
+when the state vector is defined in terms of traveling waves rather than
+voltage and current.
+
+Typical chain-scattering form:
+    [a1]   [T11 T12] [b2]
+    [b1] = [T21 T22] [a2]
+
+or similar sign/order variants depending on convention.
+
+This form is valid when:
+    - you are explicitly using wave variables
+    - you are consistent about the chosen definition
+    - all cascaded blocks are represented in the same chain-scattering form
+
+It is not interchangeable with ABCD unless the rest of the derivation is
+also written in that same representation.
+
+For this Phase I workflow, the line model was built as a true ABCD matrix:
+
+    [A B]
+    [C D]
+
+So the measured networks must also be converted to the same ABCD form
+before doing:
+
+    T_half_squared = T_thru / T_line
+
+and:
+
+    T_actual = inv(T_E) * T_meas * inv(T_E)
+
+The corrected standard equal-Z0 ABCD conversion now used is:
+
+    A = ((1 + S11)*(1 - S22) + S12*S21) / (2*S21)
+    B = Z0*((1 + S11)*(1 + S22) - S12*S21) / (2*S21)
+    C = ((1 - S11)*(1 - S22) - S12*S21) / (2*S21*Z0)
+    D = ((1 - S11)*(1 + S22) + S12*S21) / (2*S21)
+
+This is now consistent with the inverse ABCD-to-S conversion used in the
+Phase I code.
+
+5. Plot outputs added
+
+The plotting step now saves:
+    - de-embedded SOL magnitude
+    - de-embedded SOL phase
+    - de-embedded thru S21 magnitude
+    - de-embedded thru S21 phase
+    - separate arc/diagonal thru S21 magnitude
+    - separate arc/diagonal thru S21 phase
+
+These are written under:
+
+    Phase I Extraction\outputs\figures
+
+End of notes.
