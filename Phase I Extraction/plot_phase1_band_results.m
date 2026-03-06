@@ -318,16 +318,26 @@ ylabel('Magnitude');
 grid on;
 
 subplot(2, 2, 2);
-plot(freqGHz, diag.abs_s22_shift, 'LineWidth', 1.6);
-title('|\Delta S22|');
+plot(freqGHz, diag.abs_s22_shift, 'LineWidth', 1.6, 'DisplayName', '|\Delta S22|'); hold on;
+if isfield(diag, 'abs_s12_shift')
+    plot(freqGHz, diag.abs_s12_shift, 'LineWidth', 1.2, 'DisplayName', '|\Delta S12|');
+    plot(freqGHz, diag.abs_s21_shift, 'LineWidth', 1.2, 'DisplayName', '|\Delta S21|');
+end
+title('Embedding Term Shifts');
 xlabel('Frequency (GHz)');
 ylabel('Magnitude');
 grid on;
+legend('Location', 'best');
 
 subplot(2, 2, 3);
 plot(freqGHz, diag.short_mag_improvement, 'LineWidth', 1.6, 'DisplayName', 'Short'); hold on;
 plot(freqGHz, diag.open_mag_improvement, 'LineWidth', 1.6, 'DisplayName', 'Open');
 plot(freqGHz, diag.load_mag_improvement, 'LineWidth', 1.6, 'DisplayName', 'Load');
+if isfield(diag, 'simple_short_discrepancy')
+    plot(freqGHz, diag.simple_short_discrepancy, '--', 'LineWidth', 1.1, 'DisplayName', 'Simple short diff');
+    plot(freqGHz, diag.simple_open_discrepancy, '--', 'LineWidth', 1.1, 'DisplayName', 'Simple open diff');
+    plot(freqGHz, diag.simple_load_discrepancy, '--', 'LineWidth', 1.1, 'DisplayName', 'Simple load diff');
+end
 title('Improvement Metrics');
 xlabel('Frequency (GHz)');
 ylabel('Reduction');
@@ -335,11 +345,16 @@ grid on;
 legend('Location', 'best');
 
 subplot(2, 2, 4);
-plot(freqGHz, diag.sigma_change, 'LineWidth', 1.6);
-title('\Delta \sigma_{max}');
+plot(freqGHz, diag.sigma_change, 'LineWidth', 1.6, 'DisplayName', '\Delta \sigma_{max}'); hold on;
+plot(freqGHz, diag.thru_reconstruction_error, 'LineWidth', 1.2, 'DisplayName', 'P12 thru err');
+if any(~isnan(diag.p34_line_match_error))
+    plot(freqGHz, diag.p34_line_match_error, 'LineWidth', 1.2, 'DisplayName', 'P34 line err');
+end
+title('Embedding / Thru Diagnostics');
 xlabel('Frequency (GHz)');
-ylabel('Change');
+ylabel('Metric');
 grid on;
+legend('Location', 'best');
 
 sgtitle(sprintf('Phase I Refinement Diagnostics - %s GHz', bandResult.band));
 saveas(fig, fullfile(figureDir, sprintf('PhaseI_RefinementDiagnostics_%s.jpg', bandResult.band)));

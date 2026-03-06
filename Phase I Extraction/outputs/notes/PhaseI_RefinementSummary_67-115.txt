@@ -1,8 +1,16 @@
 Phase I Reflective Refinement Summary - 67-115 GHz band
 
-Mean |delta S11| = 0.121823596
-Mean |delta S22| = 0.0673366087
-Mean short |Gamma|-1 reduction = 0.0170751951
-Mean open |Gamma|-1 reduction = 0.0357089915
-Mean load |Gamma| reduction = 0.0920086937
-Mean sigma_max change = 0.0281350461
+Mean |delta S11| = 0.0564692732
+Mean |delta S12| = 0
+Mean |delta S21| = 0
+Mean |delta S22| = 0.0305969009
+Mean short |Gamma|-1 reduction = 0.00525552819
+Mean open |Gamma|-1 reduction = 0.0133595313
+Mean load |Gamma| reduction = 0.0437094382
+Mean sigma_max change = 0.00734407892
+Mean straight-thru reconstruction error = 0.00955310258
+Mean P3P4 line-match error = 0.0140893432
+Mean P3P4 return-loss error = 0.0105622699
+Mean simple short discrepancy = 0.212905409
+Mean simple open discrepancy = 0.204627921
+Mean simple load discrepancy = 0.127077892

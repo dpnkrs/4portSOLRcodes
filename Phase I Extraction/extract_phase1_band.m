@@ -27,7 +27,8 @@ lineModel = build_uniform_line_2port(straightData.freq, config.line_length_m, al
 embeddingBaseline = extract_embedding_from_thru(straightData.S, lineModel.S);
 embedding = embeddingBaseline;
 if config.embedding_refine_with_sol
-    [embedding, refineDiagnostics] = refine_embedding_with_sol(embedding, bandFiles, config);
+    [embedding, refineDiagnostics] = refine_embedding_with_sol( ...
+        embedding, bandFiles, config, straightData, p34StraightData, lineModel);
 else
     refineDiagnostics = [];
 end
@@ -458,11 +459,19 @@ end
 
 summary = struct();
 summary.mean_s11_shift = mean(refineDiagnostics.abs_s11_shift, 'omitnan');
+summary.mean_s12_shift = mean(refineDiagnostics.abs_s12_shift, 'omitnan');
+summary.mean_s21_shift = mean(refineDiagnostics.abs_s21_shift, 'omitnan');
 summary.mean_s22_shift = mean(refineDiagnostics.abs_s22_shift, 'omitnan');
 summary.mean_short_improvement = mean(refineDiagnostics.short_mag_improvement, 'omitnan');
 summary.mean_open_improvement = mean(refineDiagnostics.open_mag_improvement, 'omitnan');
 summary.mean_load_improvement = mean(refineDiagnostics.load_mag_improvement, 'omitnan');
 summary.mean_sigma_change = mean(refineDiagnostics.sigma_change, 'omitnan');
+summary.mean_thru_reconstruction_error = mean(refineDiagnostics.thru_reconstruction_error, 'omitnan');
+summary.mean_p34_line_match_error = mean(refineDiagnostics.p34_line_match_error, 'omitnan');
+summary.mean_p34_return_loss_error = mean(refineDiagnostics.p34_return_loss_error, 'omitnan');
+summary.mean_simple_short_discrepancy = mean(refineDiagnostics.simple_short_discrepancy, 'omitnan');
+summary.mean_simple_open_discrepancy = mean(refineDiagnostics.simple_open_discrepancy, 'omitnan');
+summary.mean_simple_load_discrepancy = mean(refineDiagnostics.simple_load_discrepancy, 'omitnan');
 end
 
 function write_refinement_notes(config, bandName, refineDiagnostics)
@@ -486,9 +495,17 @@ cleanup = onCleanup(@() fclose(fid));
 
 fprintf(fid, 'Phase I Reflective Refinement Summary - %s GHz band\n\n', bandName);
 fprintf(fid, 'Mean |delta S11| = %.9g\n', mean(refineDiagnostics.abs_s11_shift, 'omitnan'));
+fprintf(fid, 'Mean |delta S12| = %.9g\n', mean(refineDiagnostics.abs_s12_shift, 'omitnan'));
+fprintf(fid, 'Mean |delta S21| = %.9g\n', mean(refineDiagnostics.abs_s21_shift, 'omitnan'));
 fprintf(fid, 'Mean |delta S22| = %.9g\n', mean(refineDiagnostics.abs_s22_shift, 'omitnan'));
 fprintf(fid, 'Mean short |Gamma|-1 reduction = %.9g\n', mean(refineDiagnostics.short_mag_improvement, 'omitnan'));
 fprintf(fid, 'Mean open |Gamma|-1 reduction = %.9g\n', mean(refineDiagnostics.open_mag_improvement, 'omitnan'));
 fprintf(fid, 'Mean load |Gamma| reduction = %.9g\n', mean(refineDiagnostics.load_mag_improvement, 'omitnan'));
 fprintf(fid, 'Mean sigma_max change = %.9g\n', mean(refineDiagnostics.sigma_change, 'omitnan'));
+fprintf(fid, 'Mean straight-thru reconstruction error = %.9g\n', mean(refineDiagnostics.thru_reconstruction_error, 'omitnan'));
+fprintf(fid, 'Mean P3P4 line-match error = %.9g\n', mean(refineDiagnostics.p34_line_match_error, 'omitnan'));
+fprintf(fid, 'Mean P3P4 return-loss error = %.9g\n', mean(refineDiagnostics.p34_return_loss_error, 'omitnan'));
+fprintf(fid, 'Mean simple short discrepancy = %.9g\n', mean(refineDiagnostics.simple_short_discrepancy, 'omitnan'));
+fprintf(fid, 'Mean simple open discrepancy = %.9g\n', mean(refineDiagnostics.simple_open_discrepancy, 'omitnan'));
+fprintf(fid, 'Mean simple load discrepancy = %.9g\n', mean(refineDiagnostics.simple_load_discrepancy, 'omitnan'));
 end
