@@ -1,185 +1,457 @@
 Phase I Extraction Implementation Notes
 
-This note summarizes the implementation decisions and math discussed during
-review of the Phase I extraction code.
+This document records the final implemented Phase I workflow used to extract
+calibration standards from probe-tip-calibrated fabricated-die measurements.
 
-1. Embedding extraction from the straight thru
+Scope of Phase I:
+    - start from measured S/O/L/R and THRU structures
+    - remove pad / via / short-line embedding
+    - recover the standard characteristics at the intended standard plane
+    - prepare bandwise reference standards for later SOLR calibration work
 
-The working model is:
+This note is written as a process description. It explains the implemented
+math, code structure, and the final data products that are passed forward.
+
+
+1. Measurement model and objective
+
+The measured structures are probe-tip-calibrated. Therefore the remaining
+systematic network is the on-die transition from the probe pads to the
+standard plane. Phase I models that residual network as a symmetric
+embedding half-box E(f) surrounding the actual on-die structure.
+
+For the straight-thru used to infer the embedding:
 
     THRU_meas(f) = E(f) * L(f) * E(f)
 
 where:
     E(f) = embedding half-network from probe tip to the standard plane
-    L(f) = explicit uniform line model for the straight thru center segment
+    L(f) = explicit uniform line model for the straight-thru center section
 
-For Phase I:
-    line length = 25.44 um
-    eps_eff = 3.7245
-    Zc = 50 ohm
-    alpha = 0 initially
+For one-port standards:
 
-The extraction steps are:
+    Gamma_meas = s11 + (s12*s21*Gamma_std) / (1 - s22*Gamma_std)
 
-    T_thru(f) = ABCD(THRU_meas(f))
-    T_line(f) = ABCD(L(f))
-    T_half_squared(f) = T_thru(f) / T_line(f)
-    T_E(f) = expm(0.5 * logm(T_half_squared(f)))
+and therefore:
 
-The current implementation uses a matrix-log / matrix-exp half-factor:
+    Delta      = Gamma_meas - s11
+    Gamma_std  = Delta / (s12*s21 + s22*Delta)
 
-    T_E = expm(0.5 * logm(T_half_squared))
+For reciprocal two-port standards:
 
-This plays the same conceptual role as a matrix square root, but it often
-behaves more smoothly numerically than a direct sqrtm() evaluation.
+    T_meas   = T_E * T_std * T_E
+    T_std    = inv(T_E) * T_meas * inv(T_E)
 
-The key ambiguity is that the matrix half-factor still has two global sign
-choices:
+The Phase I goal is not to impose an idealized standard afterward. The goal
+is to characterize the fabricated standard itself after removing the
+embedding.
 
-    T_E
-    -T_E
 
-Both satisfy:
+2. Explicit line model used in embedding extraction
 
-    T_E * T_E = (-T_E) * (-T_E) = T_half_squared
+The straight-thru center line is explicitly modeled. The final implemented
+length is:
 
-For the first frequency point, the code takes the principal branch returned
-by the matrix logarithm/exponential evaluation. There is no separate sign
-decision made at the first point because there is no prior sample to
-compare against.
+    l = 25.44 um
 
-For all later frequency points, the code resolves the sign ambiguity by
-continuity:
+The base line model is:
 
-    if norm(previousRoot - tRoot, 'fro') > norm(previousRoot + tRoot, 'fro')
-        tRoot = -tRoot;
-    end
-
-This means:
-    - compare the newly computed root to the previous frequency sample
-    - also compare the negated version
-    - keep whichever one gives the smaller jump in Frobenius norm
-
-Justification:
-    - physically, the embedding network should vary smoothly with frequency
-    - the sign ambiguity is artificial, introduced by the matrix halving
-    - continuity is the standard practical way to choose the branch
-
-Important note:
-    The global sign of E does not change the final two-sided de-embedding:
-
-        inv(-E) * M * inv(-E) = inv(E) * M * inv(E)
-
-so anchoring the first point to the principal sqrtm() root is acceptable
-for this workflow.
-
-2. One-port de-embedding
-
-The measured one-port standard is modeled as the embedding network E
-terminated by the actual standard reflection Gamma_actual.
-
-Let the S-parameters of E be:
-
-    [ s11  s12 ]
-    [ s21  s22 ]
-
-Then the measured reflection at the probe-tip side is:
-
-    Gamma_meas = s11 + (s12*s21*Gamma_actual) / (1 - s22*Gamma_actual)
-
-This is the standard loaded two-port reflection formula.
-
-Solving for Gamma_actual gives:
-
-    Delta = Gamma_meas - s11
-    Gamma_actual = Delta / (s12*s21 + s22*Delta)
-
-That is exactly what deembed_oneport_standard.m implements.
-
-Interpretation:
-    - remove the direct front-face reflection term s11
-    - divide out the transmission/loading of the embedding
-    - recover the reflection coefficient at the standard plane
-
-3. Two-port de-embedding
-
-For a reciprocal standard or thru measured through the same embedding on
-both sides:
-
-    T_meas = T_E * T_actual * T_E
-
-Therefore:
-
-    T_actual = inv(T_E) * T_meas * inv(T_E)
-
-In MATLAB this is implemented as:
-
-    tActual = tEmbedding \ tMeasured / tEmbedding;
-
-where:
-    A \ B means solve A*X = B, which is numerically preferable to inv(A)*B.
-
-4. ABCD conversion versus chain-scattering conversion
-
-The original helper mistakenly used the formula:
-
-    T = (1 / S21) * [det(S), S11; -S22, 1]
-
-That is not the standard equal-reference-impedance ABCD conversion.
-It is the wave-chain / chain-scattering form often used for cascade work
-when the state vector is defined in terms of traveling waves rather than
-voltage and current.
-
-Typical chain-scattering form:
-    [a1]   [T11 T12] [b2]
-    [b1] = [T21 T22] [a2]
-
-or similar sign/order variants depending on convention.
-
-This form is valid when:
-    - you are explicitly using wave variables
-    - you are consistent about the chosen definition
-    - all cascaded blocks are represented in the same chain-scattering form
-
-It is not interchangeable with ABCD unless the rest of the derivation is
-also written in that same representation.
-
-For this Phase I workflow, the line model was built as a true ABCD matrix:
-
-    [A B]
-    [C D]
-
-So the measured networks must also be converted to the same ABCD form
-before doing:
-
-    T_half_squared = T_thru / T_line
+    gamma_line = alpha + j*beta
+    beta       = 2*pi*f*sqrt(eps_eff)/c
 
 and:
 
-    T_actual = inv(T_E) * T_meas * inv(T_E)
+    A = cosh(gamma_line*l)
+    B = Zc*sinh(gamma_line*l)
+    C = (1/Zc)*sinh(gamma_line*l)
+    D = cosh(gamma_line*l)
 
-The corrected standard equal-Z0 ABCD conversion now used is:
+The initial parameter centers used throughout the fitting were:
+
+    eps_eff = 3.7245
+    Zc      = 50 ohm
+    alpha   ~ 250 Np/m nominal center
+
+The fitted alpha values are also reported in:
+
+    dB/um = alpha * 8.686e-6
+
+The line model is used only for the explicit center section. The pads / vias
+and transitions remain absorbed into E(f).
+
+
+3. Network representation used internally
+
+The extraction is done in true ABCD form, not wave-chain form.
+
+The correct equal-reference-impedance conversion used is:
 
     A = ((1 + S11)*(1 - S22) + S12*S21) / (2*S21)
     B = Z0*((1 + S11)*(1 + S22) - S12*S21) / (2*S21)
     C = ((1 - S11)*(1 - S22) - S12*S21) / (2*S21*Z0)
     D = ((1 - S11)*(1 + S22) + S12*S21) / (2*S21)
 
-This is now consistent with the inverse ABCD-to-S conversion used in the
-Phase I code.
+This correction was important because the explicit line model is built as a
+true ABCD matrix, so the measured thru and standards must be transformed
+into the same representation before factorization and de-embedding.
 
-5. Plot outputs added
 
-The plotting step now saves:
-    - de-embedded SOL magnitude
-    - de-embedded SOL phase
-    - de-embedded thru S21 magnitude
-    - de-embedded thru S21 phase
-    - separate arc/diagonal thru S21 magnitude
-    - separate arc/diagonal thru S21 phase
+4. Embedding extraction from the straight thru
 
-These are written under:
+The implemented extraction sequence is:
 
-    Phase I Extraction\outputs\figures
+    T_thru         = ABCD(THRU_meas)
+    T_line         = ABCD(L)
+    T_half_squared = T_thru / T_line
+    T_E            = expm(0.5 * logm(T_half_squared))
+
+The half-factor uses the matrix-log / matrix-exp formulation rather than a
+raw sqrtm call:
+
+    T_E = expm(0.5 * logm(T_half_squared))
+
+This behaves as a matrix square root but was kept because it is numerically
+clean and compatible with the continuity logic already in place.
+
+The sign ambiguity of the half-factor is resolved by continuity between
+adjacent frequency samples:
+
+    if norm(previousRoot - tRoot, 'fro') > norm(previousRoot + tRoot, 'fro')
+        tRoot = -tRoot;
+    end
+
+This removes artificial sign flips from the extracted embedding.
+
+
+5. One-port and two-port de-embedding
+
+5.1 One-port standards
+
+The one-port de-embedding step uses the loaded two-port reflection formula:
+
+    Gamma_std = (Gamma_meas - s11) / (s12*s21 + s22*(Gamma_meas - s11))
+
+Interpretation:
+    - remove direct front-face reflection at the embedding input
+    - divide out forward / reverse loading through the embedding
+    - recover the standard reflection at the standard plane
+
+The output is stored as full complex reflection coefficient versus
+frequency, and then written as a 1-port Touchstone file.
+
+5.2 Two-port standards and reciprocal standards
+
+For the reciprocal through-like standards, the de-embedding is:
+
+    T_std = inv(T_E) * T_meas * inv(T_E)
+
+implemented numerically as:
+
+    tActual = tEmbedding \ tMeasured / tEmbedding;
+
+This avoids explicit matrix inversion and preserves numerical conditioning.
+
+Reciprocal standards are saved as full 2-port de-embedded S-parameters.
+
+
+6. Phase I code structure
+
+The Phase I flow is organized around these main files:
+
+    main_phase1_extraction.m
+        clears workspace / console / figures and runs the pipeline
+
+    run_phase1_extraction.m
+        top-level controller for discovery, per-band processing, plotting,
+        and finalization
+
+    phase1_config.m
+        band definitions, directory configuration, fitting parameters,
+        overlap windows, plotting defaults, and output settings
+
+    extract_phase1_band.m
+        main per-band execution:
+            - read standards / thru data
+            - extract embedding from straight thru
+            - refine embedding with measured SOL
+            - de-embed one-port / two-port standards
+            - write intermediate outputs
+
+    extract_embedding_from_thru.m
+        straight-thru factorization and line-model fitting support
+
+    refine_embedding_with_sol.m
+        reflective refinement of the embedding using measured SOL data
+
+    deembed_oneport_standard.m
+        one-port extraction using embedding S-parameters
+
+    deembed_twport_standard.m
+        two-port de-embedding in ABCD form
+
+    finalize_phase1_outputs.m
+        final selection, stitched smoothing, final Touchstone exports, and
+        summary note generation
+
+
+7. Inputs expected by the flow
+
+Measured standards are provided under:
+
+    Measured Data\RawStandards
+
+using Table-X-aligned naming such as:
+
+    <Standard>_P<Port>_<Band>.s2p
+
+Example:
+
+    Open_P1_67-115.s2p
+
+Redundant P2 one-port standards are supported and used.
+
+Simulation priors are optionally read from:
+
+    Simulated Data\Raw
+    Simulated Data\virtualmTRL_TUG
+
+If a one-port simulated file appears as `.s2p`, only S11 is used.
+
+
+8. Per-band reflective refinement of E(f)
+
+Transmission through the embedding is largely constrained by the straight
+thru. Reflection is not. Therefore the reflective part of E(f) is refined
+using measured SOL.
+
+The refinement primarily adjusts:
+
+    S11(E), S22(E)
+
+while keeping:
+
+    S12(E), S21(E)
+
+anchored to the thru-derived embedding.
+
+The refinement objective is built from:
+
+    - Open / Short passivity proximity
+    - Open / Short closeness to |Gamma| = 1
+    - Load smallness
+    - regularization toward the thru-derived baseline
+    - smoothness across frequency
+    - embedding-level sanity terms
+
+Redundant P2 standards are used because they directly constrain the
+receive-side reflection term and reduce one-sided over-correction.
+
+
+9. Bandwise line-model optimization
+
+The line-model parameters are fit band-by-band using a coarse-to-fine
+search with optional parallel evaluation. The fitted variables are:
+
+    alpha
+    eps_eff
+    Zc
+
+The objective includes:
+
+    - Open / Short passivity and target magnitude terms
+    - Load magnitude term
+    - straight-thru match to the explicit line
+    - straight-thru return-loss term
+    - embedding passivity sanity term
+    - regularization around nominal alpha / eps_eff / Zc
+
+The optimization is not intended to force the standards to ideal behavior.
+It is used only to identify a line model that makes the extracted embedding
+and resulting de-embedded standards physically reasonable.
+
+
+10. Final per-band winner selection for one-port standards
+
+Each one-port standard has redundant:
+
+    P1
+    P2
+
+measurements in several bands. The finalization step ranks both candidates
+per band and selects one bandwise winner for:
+
+    OPEN
+    SHORT
+    LOAD
+
+The ranking uses:
+
+    - passivity proximity
+    - agreement with thru-consistent embedding diagnostics
+    - smoothness
+    - closeness to simulation priors
+    - global-fit consistency
+
+The selected bandwise result is written into:
+
+    results.bands{...}.final_selection
+
+and exported per band.
+
+
+11. Global-winner path
+
+In addition to the bandwise winner path, a parallel GLOBALWIN path is
+implemented.
+
+For each one-port standard, a single port is chosen globally:
+
+    P1 or P2 across all bands
+
+based on aggregated normalized weighted metrics across the three bands.
+
+This provides:
+    - a more uniform cross-band branch
+    - a cleaner candidate for stitched fitting
+    - a diagnostic comparison against the bandwise-winner flow
+
+The global winner selection is documented in:
+
+    PhaseI_GlobalWinnerSelection.txt
+
+
+12. Global stitched fitting
+
+After bandwise or global-winner selection, a full-span stitched fit is
+built across all available bands.
+
+The implemented stitched fit is a true global fit, not just direct band
+concatenation. The process is:
+
+    1. identify overlap windows between adjacent bands
+    2. robustly align bands in overlap
+    3. apply balanced weighting so one band does not dominate
+    4. solve a smooth complex-valued global fit over the full union grid
+
+The alignment variables are:
+
+    gain
+    phi
+    tau
+
+such that the aligned upper-band data are approximately:
+
+    y_aligned(f) = gain * y(f) * exp(j*(phi + 2*pi*f*tau))
+
+For THRU fits:
+    gain alignment is disabled
+
+because the THRU case was found to be too sensitive to magnitude alignment
+through narrow overlap notches.
+
+Robust trimming and overlap-quality scaling are used so poor overlap
+sections do not dominate the stitching.
+
+
+13. THRU finalization
+
+THRU structures are not treated as P1/P2 redundant one-port candidates.
+Each THRU key is its own physical structure, for example:
+
+    EXTRACTED_THRU_P1P4_ARC
+    EXTRACTED_THRU_P1P4_DIAGONAL
+    EXTRACTED_THRU_P1P2_STRAIGHT
+    EXTRACTED_THRU_P3P4_STRAIGHT
+
+Therefore the THRU GLOBALWIN path is a global stitched smoothing path, not
+a winner-versus-rejected selection path.
+
+For THRUs:
+    - S21 and S12 are globally stitched and smoothed
+    - S11 and S22 are left as originally extracted
+
+This preserves the intended transmission fit without inventing a
+non-physical rejected branch.
+
+
+14. Final outputs
+
+Phase I writes:
+
+    outputs\touchstone
+    outputs\mat
+    outputs\figures
+    outputs\notes
+
+Main output classes are:
+
+    - per-band de-embedded one-port standard files
+    - per-band de-embedded reciprocal 2-port standard files
+    - bandwise-winner final outputs
+    - GLOBALWIN final outputs
+    - stitched full-span plots
+    - line-model and refinement diagnostics
+    - selection notes and summary notes
+
+Key final products include:
+
+    FINALFIT_<STD>_<Band>.s1p/.mat
+    FINALFIT_GLOBALWIN_<STD>_<Band>.s1p/.mat
+    FINALFIT_GLOBALWIN_<THRU_KEY>_<Band>.s2p/.mat
+
+
+15. Plot products
+
+The plotting flow saves:
+
+Bandwise diagnostics:
+    - SOL magnitude / phase
+    - THRU S21 magnitude / phase
+    - arc / diagonal THRU magnitude / phase
+    - alpha / eps_eff / Zc fit plots
+    - embedding comparison plots
+    - refinement diagnostics
+
+Stitched plots:
+    - full-span stitched SOL
+    - full-span stitched THRU
+    - stitched fits for OPEN / SHORT / LOAD
+    - stitched GLOBALWIN fits for OPEN / SHORT / LOAD
+    - stitched GLOBALWIN THRU fits
+
+GLOBALWIN SOL plots now show:
+    - winner raw traces
+    - rejected raw traces
+    - winner smooth fit
+    - rejected smooth fit
+    - simulated de-embedded overlay
+
+
+16. What is intentionally not forced in the final baseline
+
+The final Phase I baseline does not hard-clamp or passivity-project the
+final extracted standards.
+
+That decision was deliberate:
+    Phase I is meant to characterize the fabricated standards, not to
+    overwrite them with a corrected idealization.
+
+Therefore:
+    - non-passivity is treated as a diagnostic of model limitation
+    - smoothing is used only in the stitched-fit products
+    - the extracted bandwise standards remain measurement-led products
+
+
+17. Intended downstream use
+
+The Phase I results establish the measured standard characteristics that
+will be passed forward into the later SOLR calibration work.
+
+In practical use:
+    - raw bandwise extracted standards remain the primary characterized data
+    - stitched smooth fits provide a continuous full-span reference view
+    - GLOBALWIN products provide a second, more uniform branch for
+      comparison and possible downstream use
+
 
 End of notes.

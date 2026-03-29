@@ -1,0 +1,14 @@
+Figure 5.3 source note
+
+Figure 5.3 replaces the placeholder metric-only figure with direct Open/Short response comparisons.
+Each panel overlays five quantities:
+  1. measured response at the probe-tip-calibrated plane (winner realization only)
+  2. thru-only baseline extraction obtained by de-embedding the measured response with embedding_baseline
+  3. final accepted bandwise extraction
+  4. stitched final full-span reference
+  5. simulated de-embedded trend reference
+
+The thru-only baseline is recomputed inside generate_figure5_3.m from PHASE1_RESULTS_ALL.mat
+using the saved embedding_baseline and the winner-port measured_gamma.
+
+The stitched curves are taken from FINALFIT_OPEN_STITCHED_FINAL.mat and FINALFIT_SHORT_STITCHED_FINAL.mat.

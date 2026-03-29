@@ -24,11 +24,16 @@ fprintf('  Best eps_eff for %s GHz band: %.5f\n', bandName, alphaFit.best_eps_ef
 fprintf('  Best Zc for %s GHz band: %.3f ohm\n', bandName, alphaFit.best_zc);
 print_alpha_fit_breakdown(alphaFit.best_detail);
 lineModel = build_uniform_line_2port(straightData.freq, config.line_length_m, alphaFit.best_eps_eff, alphaFit.best_zc, alphaFit.best_alpha_np_per_m, config.z0);
-embeddingBaseline = extract_embedding_from_thru(straightData.S, lineModel.S);
+embeddingExtractOptions = struct( ...
+    'jump_threshold', config.embedding_root_jump_threshold, ...
+    'blend_floor', config.embedding_root_blend_floor, ...
+    'enable_jump_blend', config.embedding_root_enable_jump_blend, ...
+    'use_sqrt_candidate', false);
+embeddingBaseline = extract_embedding_from_thru(straightData.S, lineModel.S, embeddingExtractOptions);
 embedding = embeddingBaseline;
 if config.embedding_refine_with_sol
     [embedding, refineDiagnostics] = refine_embedding_with_sol( ...
-        embedding, bandFiles, config, straightData, p34StraightData, lineModel);
+        embedding, bandFiles, config, straightData, p34StraightData, lineModel, bandName);
 else
     refineDiagnostics = [];
 end
@@ -39,7 +44,7 @@ bandResult.line_model = lineModel;
 bandResult.alpha_fit = alphaFit;
 bandResult.straight_p12 = straightData;
 bandResult.straight_p34 = p34StraightData;
-bandResult.embedding_diagnostics = build_embedding_diagnostics(straightData, p34StraightData, lineModel);
+bandResult.embedding_diagnostics = build_embedding_diagnostics(straightData, p34StraightData, lineModel, config);
 bandResult.refine_diagnostics = refineDiagnostics;
 
 embeddingFilename = sprintf('EXTRACTED_EMBEDDING_%s.mat', bandName);
@@ -51,11 +56,16 @@ for idxField = 1:numel(solFields)
     if startsWith(fieldName, 'SHORT_') || startsWith(fieldName, 'OPEN_') || startsWith(fieldName, 'LOAD_')
         solData = read_touchstone_file(bandFiles.(fieldName));
         measuredGamma = select_driven_reflection(solData.S, fieldName);
-        gammaDeembeddedRaw = deembed_oneport_standard(measuredGamma, embedding.S);
+        parts = split(fieldName, '_');
+        portNumber = sscanf(parts{2}, 'P%d');
+        localPort = 1;
+        if ismember(portNumber, [2, 4])
+            localPort = 2;
+        end
+        gammaDeembeddedRaw = deembed_oneport_standard(measuredGamma, embedding.S, localPort);
         enforcement = [];
         gammaDeembedded = gammaDeembeddedRaw;
 
-        parts = split(fieldName, '_');
         standardName = upper(parts{1});
         portLabel = upper(parts{2});
 
@@ -384,8 +394,13 @@ fprintf(fid, 'zc_regularization = %.9g\n', best.zc_regularization);
 fprintf(fid, 'total_score = %.9g\n', best.total_score);
 end
 
-function diagnostics = build_embedding_diagnostics(straightData, p34StraightData, lineModel)
-embedding12 = extract_embedding_from_thru(straightData.S, lineModel.S);
+function diagnostics = build_embedding_diagnostics(straightData, p34StraightData, lineModel, config)
+embeddingExtractOptions = struct( ...
+    'jump_threshold', config.embedding_root_jump_threshold, ...
+    'blend_floor', config.embedding_root_blend_floor, ...
+    'enable_jump_blend', config.embedding_root_enable_jump_blend, ...
+    'use_sqrt_candidate', false);
+embedding12 = extract_embedding_from_thru(straightData.S, lineModel.S, embeddingExtractOptions);
 
 diagnostics = struct();
 diagnostics.freq = straightData.freq;
@@ -403,7 +418,7 @@ if isempty(p34StraightData)
     return;
 end
 
-embedding34 = extract_embedding_from_thru(p34StraightData.S, lineModel.S);
+embedding34 = extract_embedding_from_thru(p34StraightData.S, lineModel.S, embeddingExtractOptions);
 diagnostics.embedding34 = embedding34;
 
 s11Diff = abs(squeeze(embedding12.S(1, 1, :)) - squeeze(embedding34.S(1, 1, :)));
@@ -472,6 +487,10 @@ summary.mean_p34_return_loss_error = mean(refineDiagnostics.p34_return_loss_erro
 summary.mean_simple_short_discrepancy = mean(refineDiagnostics.simple_short_discrepancy, 'omitnan');
 summary.mean_simple_open_discrepancy = mean(refineDiagnostics.simple_open_discrepancy, 'omitnan');
 summary.mean_simple_load_discrepancy = mean(refineDiagnostics.simple_load_discrepancy, 'omitnan');
+if isfield(refineDiagnostics, 'sim_ref_error')
+    summary.mean_sim_ref_error = mean(refineDiagnostics.sim_ref_error, 'omitnan');
+    summary.mean_sim_raw_error = mean(refineDiagnostics.sim_raw_error, 'omitnan');
+end
 end
 
 function write_refinement_notes(config, bandName, refineDiagnostics)
@@ -508,4 +527,9 @@ fprintf(fid, 'Mean P3P4 return-loss error = %.9g\n', mean(refineDiagnostics.p34_
 fprintf(fid, 'Mean simple short discrepancy = %.9g\n', mean(refineDiagnostics.simple_short_discrepancy, 'omitnan'));
 fprintf(fid, 'Mean simple open discrepancy = %.9g\n', mean(refineDiagnostics.simple_open_discrepancy, 'omitnan'));
 fprintf(fid, 'Mean simple load discrepancy = %.9g\n', mean(refineDiagnostics.simple_load_discrepancy, 'omitnan'));
+if isfield(refineDiagnostics, 'sim_ref_error')
+    fprintf(fid, 'Mean simulation ref error = %.9g\n', mean(refineDiagnostics.sim_ref_error, 'omitnan'));
+    fprintf(fid, 'Mean simulation raw error = %.9g\n', mean(refineDiagnostics.sim_raw_error, 'omitnan'));
 end
+end
+

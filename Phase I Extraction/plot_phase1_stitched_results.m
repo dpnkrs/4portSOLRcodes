@@ -49,7 +49,7 @@ end
 
 keysList = sort(solMap.keys);
 
-fig = figure('Visible', 'on');
+fig = figure('Visible', 'off', 'Color', 'w');
 hold on;
 for idxKey = 1:numel(keysList)
     stitched = stitch_gamma_entries(solMap(keysList{idxKey}));
@@ -63,11 +63,12 @@ xlabel('Frequency (GHz)');
 ylabel('Magnitude (dB)');
 grid on;
 legend('Location', 'best');
-saveas(fig, fullfile(figureDir, 'PhaseI_Stitched_SOL_Magnitude.jpg'));
-savefig(fig, fullfile(figureDir, 'PhaseI_Stitched_SOL_Magnitude.fig'));
+apply_axes_style(gca);
+exportgraphics(fig, fullfile(figureDir, 'PhaseI_Stitched_SOL_Magnitude.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, 'PhaseI_Stitched_SOL_Magnitude.fig'));
 close(fig);
 
-fig = figure('Visible', 'on');
+fig = figure('Visible', 'off', 'Color', 'w');
 hold on;
 for idxKey = 1:numel(keysList)
     stitched = stitch_gamma_entries(solMap(keysList{idxKey}));
@@ -81,8 +82,9 @@ xlabel('Frequency (GHz)');
 ylabel('Phase (deg)');
 grid on;
 legend('Location', 'best');
-saveas(fig, fullfile(figureDir, 'PhaseI_Stitched_SOL_Phase.jpg'));
-savefig(fig, fullfile(figureDir, 'PhaseI_Stitched_SOL_Phase.fig'));
+apply_axes_style(gca);
+exportgraphics(fig, fullfile(figureDir, 'PhaseI_Stitched_SOL_Phase.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, 'PhaseI_Stitched_SOL_Phase.fig'));
 close(fig);
 end
 
@@ -93,7 +95,7 @@ end
 
 keysList = sort(thruMap.keys);
 
-fig = figure('Visible', 'on');
+fig = figure('Visible', 'off', 'Color', 'w');
 hold on;
 for idxKey = 1:numel(keysList)
     stitched = stitch_s21_entries(thruMap(keysList{idxKey}));
@@ -107,11 +109,12 @@ xlabel('Frequency (GHz)');
 ylabel('|S21| (dB)');
 grid on;
 legend('Location', 'best');
-saveas(fig, fullfile(figureDir, 'PhaseI_Stitched_THRU_S21_Magnitude.jpg'));
-savefig(fig, fullfile(figureDir, 'PhaseI_Stitched_THRU_S21_Magnitude.fig'));
+apply_axes_style(gca);
+exportgraphics(fig, fullfile(figureDir, 'PhaseI_Stitched_THRU_S21_Magnitude.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, 'PhaseI_Stitched_THRU_S21_Magnitude.fig'));
 close(fig);
 
-fig = figure('Visible', 'on');
+fig = figure('Visible', 'off', 'Color', 'w');
 hold on;
 for idxKey = 1:numel(keysList)
     stitched = stitch_s21_entries(thruMap(keysList{idxKey}));
@@ -125,8 +128,9 @@ xlabel('Frequency (GHz)');
 ylabel('Phase (deg)');
 grid on;
 legend('Location', 'best');
-saveas(fig, fullfile(figureDir, 'PhaseI_Stitched_THRU_S21_Phase.jpg'));
-savefig(fig, fullfile(figureDir, 'PhaseI_Stitched_THRU_S21_Phase.fig'));
+apply_axes_style(gca);
+exportgraphics(fig, fullfile(figureDir, 'PhaseI_Stitched_THRU_S21_Phase.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, 'PhaseI_Stitched_THRU_S21_Phase.fig'));
 close(fig);
 end
 
@@ -239,3 +243,30 @@ end
 function label = prettify_name(rawName)
 label = strrep(rawName, '_', ' ');
 end
+
+function apply_axes_style(ax)
+if nargin < 1 || isempty(ax)
+    ax = gca;
+end
+set(ax, ...
+    'Color', 'w', ...
+    'XColor', 'k', ...
+    'YColor', 'k', ...
+    'GridColor', [0.82, 0.82, 0.82], ...
+    'GridAlpha', 0.9, ...
+    'LineWidth', 1.0, ...
+    'FontSize', 11, ...
+    'Box', 'on');
+if ~isempty(ax.Title); ax.Title.Color = 'k'; end
+if ~isempty(ax.XLabel); ax.XLabel.Color = 'k'; end
+if ~isempty(ax.YLabel); ax.YLabel.Color = 'k'; end
+end
+
+function save_visible_fig(fig, filename)
+prevVisible = get(fig, 'Visible');
+set(fig, 'Visible', 'on');
+drawnow;
+savefig(fig, filename);
+set(fig, 'Visible', prevVisible);
+end
+

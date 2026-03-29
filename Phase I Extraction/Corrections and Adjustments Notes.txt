@@ -1,506 +1,450 @@
 Phase I Extraction Corrections and Adjustments Notes
 
-This note records the major corrections, optimization steps, diagnostics,
-and implementation adjustments made while developing the fabricated-die
-Phase I extraction flow.
+This document records how the Phase I extraction flow evolved from the
+first raw de-embedding attempt to the current locked baseline.
 
-The intent is different from "Implementation Notes.txt":
-    - Implementation Notes.txt explains the baseline math
-    - this file explains how the code evolved when the first de-embedded
-      results were not yet physically acceptable
+This note is intentionally chronological. It is meant to capture:
+    - what was tried
+    - why it was tried
+    - what the diagnostics said
+    - what was kept
+    - what was backed out
+
+The goal is to preserve the engineering reasoning, not just the final code.
 
 
-1. Starting point: raw de-embedding from a straight thru
+1. Initial baseline
 
-The original working model for the probe-tip-calibrated straight thru was:
+The first baseline was:
 
-    THRU_meas(f) = E(f) * L(f) * E(f)
+    THRU_meas = E * L * E
 
 with:
-    E(f) = symmetric embedding half-network
-    L(f) = explicit 25.44 um line section
 
-The initial line model used:
+    length   = 25.44 um
+    eps_eff  = 3.7245
+    Zc       = 50 ohm
+    alpha    = 0
 
-    length = 25.44 um
-    eps_eff = 3.7245
-    Zc = 50 ohm
-    alpha = 0
+The extraction then used:
 
-The baseline extraction sequence was:
+    T_E = expm(0.5 * logm(T_thru / T_line))
 
-    T_thru = ABCD(THRU_meas)
-    T_line = ABCD(L)
-    T_half_squared = T_thru / T_line
-    T_E = expm(0.5 * logm(T_half_squared))
+followed by one-port and two-port de-embedding.
 
-Then:
-
-    Gamma_actual = (Gamma_meas - s11) / (s12*s21 + s22*(Gamma_meas - s11))
-
-for one-port standards, and:
-
-    T_actual = inv(T_E) * T_meas * inv(T_E)
-
-for two-port standards.
-
-This baseline worked numerically, but the first extracted Open/Short
-responses showed non-physical magnitude above 0 dB in the mid/high bands.
+The first complete run reached completion, but the de-embedded Open and
+Short magnitudes exceeded 0 dB in the mid and high bands. That was the
+first sign that the baseline was numerically stable but not yet physically
+acceptable.
 
 
-2. First diagnosis: line model mismatch
+2. First hypothesis: line loss and line-model mismatch
 
-The first hypothesis was that the explicit line model was too ideal, in
-particular that:
+The first hypothesis was that the explicit line model was too ideal,
+especially because:
 
     alpha = 0
 
-was underestimating real attenuation, causing the extracted embedding E(f)
-to absorb too much loss and then over-correct the one-port standards.
+would force the embedding extraction to absorb too much loss.
 
-To test this, a bandwise line-model fit was added for:
+That motivated the first major tuning step:
 
-    alpha
-    eps_eff
-    Zc
+    fit alpha, eps_eff, Zc band-by-band
 
-The line model was built as:
+The implemented objective combined:
 
-    gamma_line = alpha + j*beta
-    beta = 2*pi*f*sqrt(eps_eff)/c
+    - Open / Short passivity proximity
+    - Open / Short target |Gamma| ~= 1
+    - Load smallness
+    - straight-thru match to the explicit line
+    - straight-thru return-loss suppression
+    - embedding passivity sanity
+    - regularization around nominal alpha / eps_eff / Zc
 
-and the uniform-line ABCD matrix was:
+The useful lesson from this stage was:
+    line tuning helped, but only modestly
 
-    A = cosh(gamma_line*l)
-    B = Zc*sinh(gamma_line*l)
-    C = (1/Zc)*sinh(gamma_line*l)
-    D = cosh(gamma_line*l)
-
-
-3. Objective used for line-model optimization
-
-The coarse-to-fine search over alpha / eps_eff / Zc minimized a weighted
-objective built from:
-
-    J_total =
-        w1 * J_open_short_passivity
-      + w2 * J_open_short_target
-      + w3 * J_load_magnitude
-      + w4 * J_straight_line_match
-      + w5 * J_straight_return_loss
-      + w6 * J_embedding_passivity
-      + w7 * J_alpha_regularization
-      + w8 * J_eps_regularization
-      + w9 * J_zc_regularization
-
-The main terms were:
-
-Open/Short passivity penalty:
-
-    J_open_short_passivity =
-        mean( max(|Gamma_open|-1, 0).^2 + max(|Gamma_short|-1, 0).^2 )
-
-Open/Short target penalty:
-
-    J_open_short_target =
-        mean( (|Gamma_open|-1).^2 + (|Gamma_short|-1).^2 )
-
-Load penalty:
-
-    J_load_magnitude =
-        mean( |Gamma_load|.^2 )
-
-Straight-thru line-match penalty:
-
-    J_straight_line_match =
-        mean( || S_deembedded_straight - S_line ||_F^2 )
-
-Straight-thru return-loss penalty:
-
-    J_straight_return_loss =
-        mean( |S11_straight|.^2 + |S22_straight|.^2 )
-
-Embedding passivity penalty:
-
-    J_embedding_passivity =
-        mean( max(sigma_max(E)-1, 0).^2 )
-
-Regularization penalties:
-
-    J_alpha_regularization = ((alpha - alpha0)/scale_alpha)^2
-    J_eps_regularization   = ((eps_eff - eps0)/scale_eps)^2
-    J_zc_regularization    = ((Zc - Zc0)/scale_zc)^2
-
-where the prior centers were taken near:
-
-    alpha0  = 250 Np/m
-    eps0    = 3.7245
-    Zc0     = 50 ohm
-
-Important implementation detail:
-    The brute-force 3D sweep was too slow, so this was replaced by a
-    coarse-to-fine search with optional parfor acceleration.
+The best-fit values stayed close to the nominal starting values, so line
+model error was not the dominant root cause after the first correction.
 
 
-4. What the line-model diagnostics showed
+3. Critical representation correction: S-to-ABCD
 
-Several diagnostics were added:
+One of the most important corrections in the entire Phase I development was
+the change from a chain-scattering-like conversion to the correct true ABCD
+conversion.
 
-    PhaseI_ObjectiveBreakdown_<Band>.txt
-    PhaseI_AlphaFit_<Band>.jpg
-    PhaseI_EpsEffFit_<Band>.jpg
-    PhaseI_ZcFit_<Band>.jpg
-    PhaseI_AlphaEpsEff_Surface_<Band>.jpg
-
-These diagnostics showed:
-
-    - alpha / eps_eff / Zc tuning did improve the results slightly
-    - but the best-fit values stayed close to the initial assumptions
-    - the Open/Short non-passivity remained the dominant issue
-
-Interpretation:
-    the line model was not the main bottleneck after the first tuning pass
-
-
-5. Correction of the S-to-ABCD conversion
-
-One major implementation correction was unrelated to optimization but
-critical for correctness.
-
-The original helper had used a chain-scattering type conversion:
+The old form:
 
     T = (1/S21) * [det(S), S11; -S22, 1]
 
-That representation is valid only when the entire derivation is performed
-in a consistent wave-chain formalism. The Phase I workflow, however, uses
-true ABCD matrices for the explicit line model.
+was not compatible with the rest of the derivation because the explicit
+line model was constructed in true ABCD form.
 
-Therefore the conversion was corrected to the equal-reference-impedance
-ABCD form:
+The corrected form used in the final code is:
 
     A = ((1 + S11)*(1 - S22) + S12*S21) / (2*S21)
     B = Z0*((1 + S11)*(1 + S22) - S12*S21) / (2*S21)
     C = ((1 - S11)*(1 - S22) - S12*S21) / (2*S21*Z0)
     D = ((1 - S11)*(1 + S22) + S12*S21) / (2*S21)
 
-This was a major correction because the matrix factorization and line
-de-embedding must be done in one consistent network representation.
+This correction had a larger practical impact than fine-tuning alpha or Zc.
+It made the factorization and de-embedding internally self-consistent.
 
 
-6. From thru-only extraction to reflective refinement with measured SOL
+4. Through-only extraction reached a plateau
 
-After line-model tuning plateaued, the next diagnosis was:
+After line fitting and the ABCD correction, the following pattern remained:
 
-    the straight thru constrains transmission well,
-    but does not sufficiently constrain the reflective part of E(f)
+    - de-embedded THRUs were mostly well behaved
+    - de-embedded Open / Short remained the main physical concern
 
-This matched the observed behavior:
-    - de-embedded thrus were reasonably behaved
-    - de-embedded Open/Short were the main problem
+This suggested:
 
-To address that, measured Short/Open/Load data were introduced as soft
-constraints on the reflective part of the embedding.
+    the thru constrains transmission adequately,
+    but it does not sufficiently constrain reflection in E(f)
 
-The refinement kept:
-
-    S12(E), S21(E)
-
-anchored by the thru extraction, and adjusted only:
-
-    S11(E), S22(E)
-
-The refinement objective was built from:
-
-    J_refine =
-        w_p1 * J_p1_SOL
-      + w_p2 * J_p2_SOL
-      + w_b11 * J_baseline_s11
-      + w_b22 * J_baseline_s22
-      + w_s11 * J_smoothness_s11
-      + w_s22 * J_smoothness_s22
-      + w_ep  * J_embedding_passivity
-
-where:
-
-    J_p1_SOL = J_short_p1 + J_open_p1 + J_load_p1
-    J_p2_SOL = J_short_p2 + J_open_p2 + J_load_p2
-
-with each side penalizing:
-
-    - |Gamma_short| > 1
-    - |Gamma_open|  > 1
-    - deviation of |Gamma_short| and |Gamma_open| from 1
-    - nonzero |Gamma_load|
-
-Baseline regularization kept the refined reflection terms near the
-thru-derived initial embedding:
-
-    J_baseline_s11 = mean( |S11_refined - S11_baseline|.^2 )
-    J_baseline_s22 = mean( |S22_refined - S22_baseline|.^2 )
-
-Smoothness regularization was applied between adjacent frequency samples:
-
-    J_smoothness_s11 =
-        mean( |S11_refined(k+1) - S11_refined(k)|.^2 )
-
-    J_smoothness_s22 =
-        mean( |S22_refined(k+1) - S22_refined(k)|.^2 )
-
-This "measured SOL informs reflection" step gave the first significant
-improvement in Open/Short behavior.
+That diagnosis drove the next phase of development.
 
 
-7. Why redundant P2 standards were added
+5. Reflective refinement using measured SOL
 
-Using only P1 standards left the receive-side reflection term S22 weakly
-constrained. Diagnostic plots showed:
+The next major change was to use measured Open / Short / Load to refine the
+reflective part of the embedding.
 
-    - S22 moved more than desired
-    - thru behavior degraded when the refinement overused S22 freedom
+The implemented strategy was:
 
-Therefore redundant P2 Short/Open/Load measurements were added and used to
-constrain the opposite side of the same embedding network.
+    keep S12(E), S21(E) tied to the thru-derived embedding
+    refine S11(E), S22(E) using measured SOL
 
-This was important because it turned:
+The refinement objective included:
 
-    "infer S22 indirectly"
+    - Open / Short passivity penalties
+    - Open / Short target-magnitude penalties
+    - Load magnitude penalty
+    - baseline regularization toward the thru-derived E(f)
+    - smoothness regularization across frequency
+    - embedding-level sanity terms
 
-into:
-
-    "constrain S22 directly from measurement"
-
-The improvement was not dramatic, but it made the reflective refinement
-better posed and reduced one-sided over-correction.
+This was the first stage that produced a visibly meaningful improvement in
+Open / Short behavior.
 
 
-8. Diagnostics that guided the refinement decisions
+6. Redundant P2 one-port standards were added deliberately
 
-The following diagnostics were added and repeatedly used to decide what to
-change next:
+Using only P1 one-port standards left the receive-side reflection term
+underconstrained.
 
+Diagnostic evidence:
+    - S22 moved more than expected
+    - improvements sometimes came at the cost of degrading the THRU
+    - the refinement was too one-sided
+
+So redundant P2 Open / Short / Load measurements were added and used in the
+refinement.
+
+The practical effect was not dramatic, but it improved identifiability:
+
+    P1 constrains one side of E
+    P2 constrains the opposite side of E
+
+This reduced one-sided over-correction and made the reflective refinement
+better posed.
+
+
+7. Diagnostics that governed nearly every decision
+
+Several files became central to the decision process:
+
+    PhaseI_ObjectiveBreakdown_<Band>.txt
     PhaseI_EmbeddingComparison_<Band>.jpg
-    PhaseI_EmbeddingComparison_<Band>.txt
     PhaseI_RefinementDiagnostics_<Band>.jpg
     PhaseI_RefinementSummary_<Band>.txt
 
-The embedding comparison diagnostics separately extracted:
+The most useful diagnostic quantities were:
 
-    E12 from P1P2 straight thru
-    E34 from P3P4 straight thru
+    - change in |S11(E)| and |S22(E)|
+    - improvement in Short / Open / Load after refinement
+    - change in sigma_max(E)
+    - comparison of E12 versus E34 extracted from different straight THRUs
+    - raw-versus-simulated error metrics
 
-and compared:
+These diagnostics revealed a persistent pattern:
 
-    |S11|
-    |S21|
-    |S22|
-    sigma_max
+    transmission terms were already reasonable
+    reflection terms were the true bottleneck
 
-This showed:
+That observation justified focusing subsequent work on reflective
+refinement and final selection rather than repeatedly retuning the line.
 
-    - E12 and E34 were not identical
-    - the largest differences were in reflection, not transmission
-    - the shared-per-band embedding assumption was only approximate
-    - but the disagreement was not large enough to explain the entire
-      Open/Short passivity problem
 
-The refinement summary diagnostics reported:
+8. Important experiments that were tried and then reduced or rolled back
 
-    mean |delta S11|
-    mean |delta S22|
-    improvement in Short
-    improvement in Open
-    improvement in Load
-    mean change in sigma_max
+8.1 Joint shared extraction using multiple THRUs
 
-These diagnostics were especially useful for identifying whether:
+An attempt was made to use additional THRUs jointly to identify a more
+shared embedding. This did not materially improve the one-port standards
+and tended to wash out the useful embedding already identified by the
+primary straight-thru path.
 
-    - a refinement was helping the standard of interest
-    - the refinement was moving S11/S22 too much
-    - the improvement was bought at the cost of degrading the embedding
+Conclusion:
+    informative, but not retained as the main extraction route
 
+8.2 Strong embedding-level passivity penalties
 
-9. Approaches that were tested and then reduced or rolled back
+More aggressive passivity penalties on E(f) were tested. These did not
+resolve the Open / Short issue in a satisfactory way and could degrade the
+THRUs.
 
-Several intermediate ideas were tested but not kept as the final main
-strategy:
+Conclusion:
+    reduced / rolled back
 
-Joint extraction from P1P2 and P3P4:
-    A joint shared-E extraction was tried, but it did not materially
-    improve the one-port standards and tended to wash out the useful
-    P1P2-based embedding for the standards being extracted.
+8.3 Low-order polynomial reflection refinement
 
-Direct sqrtm versus logm/expm:
-    Replacing sqrtm(T) with expm(0.5*logm(T)) was implemented because it
-    is often numerically cleaner. In practice, it did not materially
-    change the extracted results for this dataset, but the logm/expm form
-    was retained as the cleaner implementation.
+A more rigid polynomial correction model was tested for S11(E) / S22(E).
+It was smoother, but too inflexible and generally inferior to the smoothed
+pointwise refinement.
 
-Aggressive embedding-level passivity penalties:
-    Stronger passivity penalties and smoothing applied directly to E(f)
-    were tested. These did not sufficiently fix the Open/Short behavior
-    and could degrade the thrus. Those stronger embedding penalties were
-    therefore reduced.
+Conclusion:
+    not retained
 
-Low-order polynomial reflective refinement:
-    A polynomial correction model for S11/S22 was tested as a more global,
-    smoother alternative to pointwise adjustment. It proved too rigid and
-    gave less improvement than the smoothed pointwise refinement.
+8.4 Direct SOL passivity enforcement
 
-Hard passivity clamp on SOL:
-    A direct magnitude clamp on the final Open/Short was rejected because
-    it produced an artificially flat appearance and was too visibly forced.
+Both hard clamps and softer radial passivity projections were tried.
 
-Smooth radial passivity projection on SOL:
-    A softer SOL-only passive projection was also tested. The idea was:
+They improved the appearance of passivity, but they also moved the result
+away from:
 
-        Gamma_passive(f) = Gamma_raw(f) / s_smooth(f)
+    characterized fabricated standard
 
-    with:
+toward:
 
-        s(f) = max( 1, |Gamma_raw(f)| / 0.999 )
+    post-corrected standard
 
-    and s(f) smoothed over frequency before applying the correction.
+Conclusion:
+    explicitly rolled back for the final Phase I baseline
 
-    This preserved phase and avoided flat clipping. However, it was still
-    judged too strong for Phase I because this stage is intended to
-    characterize the standards, not to overwrite them with a post-processed
-    passive projection.
 
-    The smooth radial projection therefore remains a documented experiment,
-    not part of the final Phase I baseline.
+9. Why SOL passivity enforcement was rolled back
 
+This decision is central enough to state plainly.
 
-10. Why SOL passivity enforcement was rolled back
+Phase I is intended to characterize the standards themselves after
+de-embedding. Therefore a final projection of the extracted standard onto
+the passive set, even if mathematically smooth, was judged too strong.
 
-The final decision was to remove SOL passivity enforcement from the Phase I
-outputs.
+The accepted final interpretation is:
 
-Reason:
-    Phase I is intended to characterize the standards themselves from
-    measurement-led de-embedding. A final projection onto the passive set,
-    even a smooth radial one, moves the result away from "characterized
-    standard" toward "corrected standard."
+    residual non-passivity is a diagnostic of model limitation,
+    not something to hide at the standard-definition stage
 
-This was considered too strong for the intended role of Phase I.
+This is why the final baseline keeps:
 
-Therefore the final baseline keeps:
+    - raw de-embedded standard behavior
+    - no final passivity projection
+    - passivity diagnostics only as evidence of residual mismatch
 
-    - raw de-embedded SOL as the official extracted standards
-    - passivity-related diagnostics only as evidence of residual model error
-    - de-embedded thrus unchanged
 
-The remaining non-passivity in some Open/Short traces is therefore treated
-as a limitation of the current extraction model and an argument for future
-embedding-level passivity enforcement, not as something to hide at the
-standard-definition level.
+10. Need for stitched full-span behavior
 
+Once per-band extraction was stable enough, the next requirement was to
+create a continuous cross-band representation for reporting and later
+handoff.
 
-11. Why the thru was not directly compensated from SOL passivity enforcement
+Initially, stitching was only overlap-based alignment and blending for
+plots. That helped continuity visually, but did not create a true global
+representation.
 
-Even while SOL passivity enforcement was under evaluation, a deliberate
-decision was made not to propagate that correction into the de-embedded
-thru results.
+This motivated the later stitched-fit path.
 
-Reason:
-    the passivity enforcement was only a final post-processing step on the
-    extracted SOL, not a self-consistent correction to E(f)
 
-Therefore:
+11. Bandwise winner selection
 
-    - the thru remains the direct de-embedded result from the embedding
-    - any SOL passivity projection would remain a separate post-processing
-      layer, not a change to the embedding model itself
+Because redundant P1 and P2 standards existed, the finalization step began
+ranking both candidates per band and selecting a winner for:
 
-A future embedding-level passivity enforcement would be the proper place to
-make SOL and thru change together in a fully self-consistent way.
+    OPEN
+    SHORT
+    LOAD
 
+The ranking metrics evolved to include:
 
-12. Stitching across bands using overlaps
+    - passivity proximity
+    - forward agreement with the embedding / THRU behavior
+    - smoothness
+    - fit consistency
+    - closeness to simulated de-embedded behavior
 
-Because each band is extracted independently, stitched plots initially
-showed visible jumps at:
+This was an important operational step because it prevented a poor local
+branch from polluting the final extracted standard passed forward.
 
-    67 GHz
-    110-115 GHz region
 
-To improve presentation and continuity, overlap-based stitching was added.
+12. Global winner path
 
-The stitched plotting step:
+Even after bandwise winners were in place, small cross-band inconsistencies
+remained because the selected port could change from band to band.
 
-    - identifies overlap regions between adjacent bands
-    - computes a complex alignment factor in the overlap
-    - aligns the upper band to the lower band
-    - blends the two using a smooth weight across the overlap
+To study that, a parallel GLOBALWIN path was added:
 
-In simplified form, if yL(f) is the lower-band complex trace and yU(f) is
-the upper-band complex trace over the overlap, then:
+    choose P1 or P2 once per standard across all bands
 
-    c_align = arg min_c || yL - c * yU ||_2
+using aggregated normalized weighted metrics.
 
-which gives the least-squares alignment factor:
+This produced:
+    - a cleaner branch for stitched fitting
+    - a direct comparison against bandwise winners
+    - a diagnostic indication of whether port switching itself was causing
+      some of the stitched discontinuities
 
-    c_align = (yU^H yL) / (yU^H yU)
+The bandwise winner path was kept intact. GLOBALWIN was added in parallel,
+not as a destructive replacement.
 
-Then the aligned upper band is:
 
-    yU_aligned = c_align * yU
+13. Global stitched fitting
 
-and the stitched overlap is blended with:
+The stitched-fit work went through several stages.
 
-    y_blend = (1-w) * yL + w * yU_aligned
+13.1 Early stitched fit behavior
 
-where w varies smoothly from 0 to 1 across the overlap.
+At first, the stitched fit tracked the local band results too directly. In
+other cases, it over-bridged the band edges and created non-physical jumps.
 
-This stitching is primarily for continuity of the final plots and exported
-band-spanning views. It does not replace the original per-band extracted
-files.
+This led to several corrections:
 
+    - overlap-based complex alignment
+    - robust trimming of overlap statistics
+    - overlap-quality scaling
+    - separate THRU handling with no gain alignment
+    - balanced per-band weighting
+    - global smooth fit over the union grid
 
-13. Present status of the Phase I baseline
+13.2 Key lesson from the stitched-fit work
 
-At the current stopping point:
+There is a real tension between:
 
-    - line-model fitting is implemented and stable
-    - reflective refinement uses measured P1 and P2 SOL
-    - de-embedded thrus are preserved as extracted
-    - final SOL outputs are the raw de-embedded characterized standards
-    - overlap-based stitched plots are available for the full 10 MHz to
-      170 GHz range
+    continuity across bands
+    versus
+    fidelity to each band's accepted measurement
 
-Current limitations:
+Too little regularization:
+    the fit simply traces local fragments
 
-    - some Open/Short traces remain slightly non-passive, especially in
-      the higher bands
-    - stitched plots are continuous enough for progress reporting, but the
-      underlying bands are still independently extracted
-    - a more physically self-consistent solution would require future
-      embedding-level passivity enforcement rather than SOL-level
-      post-processing
+Too much regularization:
+    the fit bridges away from real local behavior
 
+The current stitched-fit implementation is therefore a compromise intended
+for reporting and final handoff, not a claim that the standard is exactly a
+single ideal curve.
 
-14. Summary of what gave the biggest practical improvements
 
-The most important improvements were:
+14. THRU-specific stitched-fit adjustments
 
-    1. Correcting the S-to-ABCD conversion
-    2. Introducing coarse-to-fine line-model optimization
-    3. Using measured SOL to refine the reflective part of E(f)
-    4. Adding redundant P2 SOL to constrain S22
-    5. Using overlap-based stitching for cross-band visualization
+The THRU case required different treatment from SOL.
 
-The most important rejected-but-informative experiments were:
+Observed issue:
+    gain alignment in the overlap region could overreact to notch-like
+    disturbances near high-band entry
 
-    - stronger embedding-level passivity penalties
-    - joint E extraction from P1P2 and P3P4
-    - polynomial reflective refinement
-    - SOL-only passive projection
+Implemented correction:
 
-The main lesson from the diagnostics was:
+    for THRUs, allow phase / delay alignment
+    but disable gain alignment
 
-    raw thru-only de-embedding was adequate for transmission behavior,
-    but measured SOL data were required to infer the reflective behavior of
-    the embedding well enough to approach physically valid Open/Short
-    standards.
+This preserved cross-band continuity without artificially lifting or
+dropping the THRU magnitude around band boundaries.
+
+Important note:
+    THRUs do not have a GLOBALWIN rejected branch analogous to SOL.
+    Each THRU key is its own physical structure, not a redundant P1/P2
+    measurement of the same standard.
+
+
+15. Final plot and archival improvements
+
+Later in the process, additional infrastructure was added so the output set
+would be dissertation-friendly:
+
+    - white-background plots
+    - saved .fig files that reopen correctly
+    - stitched full-span plots
+    - GLOBALWIN plots
+    - overlays of winner, rejected, stitched fit, and simulation
+
+The saved-figure logic was corrected so figures created with hidden
+visibility are temporarily made visible before `savefig`, otherwise MATLAB
+reopens them invisibly.
+
+
+16. What the current locked baseline means physically
+
+The current locked Phase I baseline should be interpreted as:
+
+    1. de-embed the fabricated standards using a measurement-led embedding
+       model
+    2. use THRU data to identify transmission and line behavior
+    3. use measured SOL to refine reflection
+    4. retain the extracted standards without post-enforced passivity
+    5. generate stitched smooth fits for continuity, comparison, and
+       downstream use
+
+The stitched smooth fit is therefore:
+
+    a regularized aggregate representation of the accepted extracted bands
+
+and not:
+
+    a replacement for the measured bandwise extraction itself
+
+
+17. Major decisions that were kept
+
+Retained in the final baseline:
+
+    - explicit 25.44 um line model
+    - correct ABCD conversion
+    - logm/expm half-factor extraction
+    - bandwise line-model fitting
+    - reflective refinement using measured SOL
+    - inclusion of redundant P2 standards
+    - bandwise winner selection
+    - parallel GLOBALWIN path
+    - global stitched fits with robust overlap alignment
+    - THRU-specific no-gain stitched alignment
+
+
+18. Major decisions that were explicitly not kept
+
+Not retained in the final baseline:
+
+    - hard passive clamp of extracted standards
+    - soft passive projection of final standards
+    - strong embedding passivity forcing
+    - polynomial-only reflection correction
+    - joint shared embedding extraction as the primary route
+
+
+19. Practical dissertation-level summary
+
+If the work is described at a dissertation level, the clean narrative is:
+
+    1. start from probe-tip-calibrated fabricated-die measurements
+    2. model the residual on-die transition as symmetric embedding boxes
+    3. use the measured straight-thru plus an explicit 25.44 um line model
+       to identify the transmission-side embedding
+    4. use measured Open / Short / Load to refine the reflective side of
+       the embedding
+    5. de-embed the fabricated standards band-by-band
+    6. select the most reliable redundant branch per standard
+    7. generate a stitched smooth full-span representation for downstream
+       calibration use and reporting
+
+
+20. Present status
+
+The current Phase I extraction should now be treated as the archived
+baseline for fabricated-die standard characterization unless a future,
+more self-consistent embedding-level passivity model is intentionally
+introduced as a new phase of work.
 
 
 End of notes.

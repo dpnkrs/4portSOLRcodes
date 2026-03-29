@@ -1,0 +1,14 @@
+Figure 5.4 source note
+
+Figure 5.4 focuses on the Load as the limiting extracted one-port standard.
+Panels (a) and (b) overlay the measured winner realization, the thru-only baseline extraction,
+the final accepted bandwise extraction, the stitched final reference, and the simulated de-embedded reference.
+
+Panel (c) converts the accepted bandwise and stitched Load responses to impedance using
+Z = Z0 * (1 + Gamma) / (1 - Gamma), with the simulated de-embedded reference shown as a trend overlay.
+
+Panel (d) plots two practical uncertainty indicators for the Load:
+  1. |Delta Gamma| between accepted and rejected redundant extractions
+  2. held-out Load residual magnitude under the square one-port solve using the accepted winners
+
+This figure is intended to support the claim that the Load, not matrix conditioning, sets the practical limit.

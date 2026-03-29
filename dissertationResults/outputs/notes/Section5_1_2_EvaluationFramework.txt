@@ -1,0 +1,40 @@
+Section 5.1.2 Evaluation Framework
+
+The extracted standards should be evaluated using the measurement-led criteria already stated in the chapter, but the present data supports a clearer operationalization of each criterion.
+
+1. Physical plausibility
+Purpose: Verify smooth and interpretable Open/Short/Load behavior at the extracted reference plane
+Quantitative proxy: Open/Short median |Gamma| = 0.964 to 1.015 across bands; Load median |Gamma| = 0.073 to 0.218; Load Re{Z} spans 9.5 to 106.2 ohm and Im{Z} spans -35.7 to 16.3 ohm.
+Interpretation: Open and Short remain strongly reflective; the Load remains usable but is the least ideal standard, especially in the upper D-band.
+
+2. Standard separation
+Purpose: Confirm that Open, Short, and Load remain sufficiently distinct in the complex reflection plane
+Quantitative proxy: Minimum pairwise separations by band: 0-67 GHz 0.213, 67-115 GHz 0.744, 110-170 GHz 0.555. The closest approach is always between the Load and a reflective standard, not between Open and Short.
+Interpretation: Strong overall. Open and Short remain well separated; the Load is less central than ideal but remains identifiable.
+
+3. Redundant-measurement repeatability
+Purpose: Quantify spread across redundant realizations and repeated touchdowns
+Quantitative proxy: Median |dMag| between redundant extractions: Open 0.051 to 0.432 dB, Short 0.043 to 0.524 dB, Load 3.021 to 3.612 dB. Phase spread is consistently largest for the Load and for the upper bands.
+Interpretation: Good for Open/Short, materially weaker for the Load.
+
+4. Extraction consistency
+Purpose: Assess whether reflective refinement improves one-port behavior while remaining consistent with the thru-derived embedding
+Quantitative proxy: Median reflective-improvement terms by band: Open 0.0001/0.0425/-0.0217, Short 0.0099/0.0334/0.1090, Load 0.0058/0.0460/0.0396. Median thru-reconstruction error remains 0.0019 to 0.0093, with |Delta sigma_max| 0.0055 to 0.0176.
+Interpretation: Good. Reflective refinement improves one-port behavior without materially undermining the thru-based embedding baseline.
+
+5. SOL solve conditioning
+Purpose: Evaluate kappa_SOL(f) = kappa_2(A_SOL(f)) versus frequency
+Quantitative proxy: kappa_SOL median / max by band: 0-67 GHz 3.35 / 10.53, 67-115 GHz 3.73 / 3.97, 110-170 GHz 3.92 / 5.17; kappa_SOL stays below 50 across the full measured span.
+Interpretation: Excellent. Numerical conditioning is not the limiting factor in the present one-port kit.
+
+6. Closure residual
+Purpose: Evaluate r_k(f) and distinguish algebraic closure from held-out validation
+Quantitative proxy: Direct same-set closure is effectively machine-zero because the solved system is square. Held-out redundant residual medians are Open 0.0068 to 0.0521, Short 0.0040 to 0.0452, Load 0.0119 to 0.0362.
+Interpretation: Direct closure is not discriminative here; held-out redundant residual is the meaningful validation metric.
+
+7. Simulation trend agreement
+Purpose: Check broad trend agreement without using simulation as absolute truth
+Quantitative proxy: Median complex-plane |dGamma| against the Chapter 4 de-embedded reference: Open 0.214 to 0.883, Short 0.294 to 1.035, Load 0.070 to 0.172 across the measured bands.
+Interpretation: Trend-level only. Agreement is useful qualitatively, but not strong enough to treat simulation as a ground-truth benchmark.
+
+Recommended chapter-level clarification: the direct same-set closure residual is algebraically trivial for a square three-standard solve and should therefore be reported only as an internal sanity check. The held-out redundant residual is the stronger validation metric because it tests the solved model on an extraction branch that was not used to identify the one-port error terms.

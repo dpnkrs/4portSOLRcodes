@@ -1,0 +1,16 @@
+Figure 5.2 source note
+
+The stitched curves used in Figure 5.2 are the locked accepted-bandwise stitched final products:
+  FINALFIT_OPEN_STITCHED_FINAL.mat
+  FINALFIT_SHORT_STITCHED_FINAL.mat
+  FINALFIT_LOAD_STITCHED_FINAL.mat
+
+These stitched curves are regularized full-span representations of the accepted bandwise winners, not the alternate GLOBALWIN branch.
+
+Accepted bandwise winners used to build the stitched curves:
+  OPEN  : P2 (0-67), P2 (67-115), P1 (110-170)
+  SHORT : P1 (0-67), P2 (67-115), P2 (110-170)
+  LOAD  : P2 (0-67), P1 (67-115), P2 (110-170)
+
+Figure 5.2(a) plots accepted bandwise magnitude traces together with the stitched final curves.
+Figure 5.2(b) plots the accepted bandwise Smith-chart loci together with the stitched final curves.

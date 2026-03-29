@@ -1,0 +1,27 @@
+Section 5.1.5 Adopted One-Port Standards for the Measured SOLR Calibration
+
+The accepted bandwise extracted standards remain the primary calibration standards for measured SOLR. The stitched full-span fits are retained as complementary reporting products and as smooth downstream references, but they should not be described as replacements for the accepted bandwise measurements.
+
+OPEN:
+Selected realizations = 0-67 P2, 67-115 P2, 110-170 P1
+Global preference = P2
+Suggested usable range = Full measured span; mild caution near the upper edge of the D-band
+Notes = Most stable as a strongly reflective standard; simulation agreement is only trend-level in the upper bands.
+
+SHORT:
+Selected realizations = 0-67 P1, 67-115 P2, 110-170 P2
+Global preference = P2
+Suggested usable range = Full measured span; strongest caution near the upper D-band
+Notes = Remains strongly reflective, but the upper D-band shows the clearest loss of ideal short behavior.
+
+LOAD:
+Selected realizations = 0-67 P2, 67-115 P1, 110-170 P2
+Global preference = P2
+Suggested usable range = Full measured span for reporting; upper D-band is the dominant sensitivity region
+Notes = Primary limiting standard. Repeatability and centrality both degrade first in the Load.
+
+The one-port conditioning remains excellent through the full measured span, with kappa_SOL below 10.53 even in the worst case. For that reason, the most defensible practical limitation statement is not that the one-port model fails above a sharply defined frequency, but that confidence becomes increasingly controlled by Load repeatability and high-band embedding sensitivity near the upper edge of the 110-170 GHz band.
+
+The stitched curves should be described as regularized aggregates of the accepted bandwise winners. Their role is to provide continuity across the full span and a smooth handoff to the downstream calibration flow. They are not better measurements than the accepted bandwise curves; they are smoother representations of them.
+
+Saved stitched final-fit products are available for OPEN, SHORT, and LOAD over 0.01-170.00 GHz, 0.01-170.00 GHz, and 0.01-170.00 GHz on the common full-span grids, respectively.

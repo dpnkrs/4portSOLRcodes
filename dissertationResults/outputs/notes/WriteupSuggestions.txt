@@ -1,0 +1,20 @@
+Write-up Suggestions
+
+1. Reframe the closure-residual discussion.
+The direct residual computed from the same three standards used to solve the one-port model is effectively algebraic for the present square system. Keep it as an internal sanity check, but add the held-out redundant residual as the meaningful lack-of-fit metric.
+
+2. Do not use kappa_SOL alone to define the practical upper frequency limit. The one-port conditioning remains excellent through the full measured span, with kappa_SOL max 10.53. If the chapter wants to discuss a practical caution region, anchor that discussion in Load repeatability, held-out residual growth, and high-band embedding sensitivity instead.
+
+3. Make the role of the stitched curves explicit.
+The stitched curves are smooth, regularized aggregates of the accepted bandwise results. They are useful for reporting and for continuous downstream reference products, but they should not be described as replacing the accepted bandwise extracted standards.
+
+4. Keep simulation comparison secondary.
+The measured-versus-simulated overlays are useful for trend-level direction checks only. The present data does not support describing simulation disagreement by itself as extraction failure.
+
+5. Make the Load the explicit limiting standard in the narrative.
+The Open and Short are the better behaved extracted standards. The Load carries the largest redundant-measurement spread and the largest held-out residual, so the discussion of kit quality should foreground the Load rather than treating all three standards symmetrically.
+
+6. Convert Table 5.1 from a qualitative placeholder into an operationalized metric table.
+Each criterion can now be tied to a concrete proxy: |Gamma| and Zload ranges, pairwise separations, redundant spread, refinement/thru consistency metrics, kappa_SOL, held-out residual, and trend-level simulation error.
+
+7. State the refinement interpretation carefully. The final embedding should be described as straight-Thru anchored with reflective correction from the measured SOL data. Median thru-reconstruction error remains between 0.0019 and 0.0093 after refinement.

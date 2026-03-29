@@ -7,7 +7,7 @@ if ~exist(figureDir, 'dir')
 end
 
 if isfield(bandResult, 'alpha_fit') && ~isempty(bandResult.alpha_fit)
-    fig = figure('Visible', 'on');
+    fig = figure('Visible', 'off', 'Color', 'w');
     alphaScores = squeeze(min(min(bandResult.alpha_fit.total_scores, [], 3), [], 2));
     plot(bandResult.alpha_fit.alpha_grid_np_per_m, alphaScores, 'LineWidth', 1.8);
     hold on;
@@ -16,11 +16,11 @@ if isfield(bandResult, 'alpha_fit') && ~isempty(bandResult.alpha_fit)
     xlabel('\alpha (Np/m)');
     ylabel('Objective');
     grid on;
-    saveas(fig, fullfile(figureDir, sprintf('PhaseI_AlphaFit_%s.jpg', bandResult.band)));
-    savefig(fig, fullfile(figureDir, sprintf('PhaseI_AlphaFit_%s.fig', bandResult.band)));
+    exportgraphics(fig, strrep(fullfile(figureDir, sprintf('PhaseI_AlphaFit_%s.fig', bandResult.band)), '.fig', '.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, sprintf('PhaseI_AlphaFit_%s.fig', bandResult.band)));
     close(fig);
 
-    fig = figure('Visible', 'on');
+    fig = figure('Visible', 'off', 'Color', 'w');
     epsScores = squeeze(min(min(bandResult.alpha_fit.total_scores, [], 3), [], 1));
     plot(bandResult.alpha_fit.eps_eff_grid, epsScores, 'LineWidth', 1.8);
     hold on;
@@ -29,11 +29,11 @@ if isfield(bandResult, 'alpha_fit') && ~isempty(bandResult.alpha_fit)
     xlabel('\epsilon_{eff}');
     ylabel('Objective');
     grid on;
-    saveas(fig, fullfile(figureDir, sprintf('PhaseI_EpsEffFit_%s.jpg', bandResult.band)));
-    savefig(fig, fullfile(figureDir, sprintf('PhaseI_EpsEffFit_%s.fig', bandResult.band)));
+    exportgraphics(fig, strrep(fullfile(figureDir, sprintf('PhaseI_EpsEffFit_%s.fig', bandResult.band)), '.fig', '.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, sprintf('PhaseI_EpsEffFit_%s.fig', bandResult.band)));
     close(fig);
 
-    fig = figure('Visible', 'on');
+    fig = figure('Visible', 'off', 'Color', 'w');
     alphaEpsSurface = squeeze(min(bandResult.alpha_fit.total_scores, [], 3));
     imagesc(bandResult.alpha_fit.eps_eff_grid, bandResult.alpha_fit.alpha_grid_np_per_m, alphaEpsSurface);
     axis xy;
@@ -43,11 +43,11 @@ if isfield(bandResult, 'alpha_fit') && ~isempty(bandResult.alpha_fit)
     title(sprintf('Phase I Alpha/EpsEff Objective Surface - %s GHz', bandResult.band));
     xlabel('\epsilon_{eff}');
     ylabel('\alpha (Np/m)');
-    saveas(fig, fullfile(figureDir, sprintf('PhaseI_AlphaEpsEff_Surface_%s.jpg', bandResult.band)));
-    savefig(fig, fullfile(figureDir, sprintf('PhaseI_AlphaEpsEff_Surface_%s.fig', bandResult.band)));
+    exportgraphics(fig, strrep(fullfile(figureDir, sprintf('PhaseI_AlphaEpsEff_Surface_%s.fig', bandResult.band)), '.fig', '.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, sprintf('PhaseI_AlphaEpsEff_Surface_%s.fig', bandResult.band)));
     close(fig);
 
-    fig = figure('Visible', 'on');
+    fig = figure('Visible', 'off', 'Color', 'w');
     zcScores = squeeze(min(min(bandResult.alpha_fit.total_scores, [], 2), [], 1));
     plot(bandResult.alpha_fit.zc_grid, zcScores, 'LineWidth', 1.8);
     hold on;
@@ -65,8 +65,8 @@ if isfield(bandResult, 'alpha_fit') && ~isempty(bandResult.alpha_fit)
         legendEntries = {'Coarse', 'Selected', 'Refined'};
     end
     legend(legendEntries, 'Location', 'best');
-    saveas(fig, fullfile(figureDir, sprintf('PhaseI_ZcFit_%s.jpg', bandResult.band)));
-    savefig(fig, fullfile(figureDir, sprintf('PhaseI_ZcFit_%s.fig', bandResult.band)));
+    exportgraphics(fig, strrep(fullfile(figureDir, sprintf('PhaseI_ZcFit_%s.fig', bandResult.band)), '.fig', '.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, sprintf('PhaseI_ZcFit_%s.fig', bandResult.band)));
     close(fig);
 end
 
@@ -105,7 +105,7 @@ for idx = 1:numel(outputFields)
 end
 
 if ~isempty(solNames)
-    fig = figure('Visible', 'on');
+    fig = figure('Visible', 'off', 'Color', 'w');
     hold on;
     for idx = 1:numel(solNames)
         baseLabel = prettify_name(solNames{idx});
@@ -125,11 +125,11 @@ if ~isempty(solNames)
     ylabel('Magnitude (dB)');
     grid on;
     legend('Location', 'best');
-    saveas(fig, fullfile(figureDir, sprintf('PhaseI_SOL_Magnitude_%s.jpg', bandResult.band)));
-    savefig(fig, fullfile(figureDir, sprintf('PhaseI_SOL_Magnitude_%s.fig', bandResult.band)));
+    exportgraphics(fig, strrep(fullfile(figureDir, sprintf('PhaseI_SOL_Magnitude_%s.fig', bandResult.band)), '.fig', '.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, sprintf('PhaseI_SOL_Magnitude_%s.fig', bandResult.band)));
     close(fig);
 
-    fig = figure('Visible', 'on');
+    fig = figure('Visible', 'off', 'Color', 'w');
     hold on;
     for idx = 1:numel(solNames)
         baseLabel = prettify_name(solNames{idx});
@@ -149,13 +149,13 @@ if ~isempty(solNames)
     ylabel('Phase (deg)');
     grid on;
     legend('Location', 'best');
-    saveas(fig, fullfile(figureDir, sprintf('PhaseI_SOL_Phase_%s.jpg', bandResult.band)));
-    savefig(fig, fullfile(figureDir, sprintf('PhaseI_SOL_Phase_%s.fig', bandResult.band)));
+    exportgraphics(fig, strrep(fullfile(figureDir, sprintf('PhaseI_SOL_Phase_%s.fig', bandResult.band)), '.fig', '.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, sprintf('PhaseI_SOL_Phase_%s.fig', bandResult.band)));
     close(fig);
 end
 
 if ~isempty(thruNames)
-    fig = figure('Visible', 'on');
+    fig = figure('Visible', 'off', 'Color', 'w');
     hold on;
     for idx = 1:numel(thruNames)
         baseLabel = prettify_name(thruNames{idx});
@@ -169,11 +169,11 @@ if ~isempty(thruNames)
     ylabel('|S21| (dB)');
     grid on;
     legend('Location', 'best');
-    saveas(fig, fullfile(figureDir, sprintf('PhaseI_THRU_S21_Magnitude_%s.jpg', bandResult.band)));
-    savefig(fig, fullfile(figureDir, sprintf('PhaseI_THRU_S21_Magnitude_%s.fig', bandResult.band)));
+    exportgraphics(fig, strrep(fullfile(figureDir, sprintf('PhaseI_THRU_S21_Magnitude_%s.fig', bandResult.band)), '.fig', '.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, sprintf('PhaseI_THRU_S21_Magnitude_%s.fig', bandResult.band)));
     close(fig);
 
-    fig = figure('Visible', 'on');
+    fig = figure('Visible', 'off', 'Color', 'w');
     hold on;
     for idx = 1:numel(thruNames)
         baseLabel = prettify_name(thruNames{idx});
@@ -187,14 +187,14 @@ if ~isempty(thruNames)
     ylabel('Phase (deg)');
     grid on;
     legend('Location', 'best');
-    saveas(fig, fullfile(figureDir, sprintf('PhaseI_THRU_S21_Phase_%s.jpg', bandResult.band)));
-    savefig(fig, fullfile(figureDir, sprintf('PhaseI_THRU_S21_Phase_%s.fig', bandResult.band)));
+    exportgraphics(fig, strrep(fullfile(figureDir, sprintf('PhaseI_THRU_S21_Phase_%s.fig', bandResult.band)), '.fig', '.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, sprintf('PhaseI_THRU_S21_Phase_%s.fig', bandResult.band)));
     close(fig);
 end
 
 nonStraightMask = cellfun(@(name) contains(name, 'ARC') || contains(name, 'DIAGONAL'), thruNames);
 if any(nonStraightMask)
-    fig = figure('Visible', 'on');
+    fig = figure('Visible', 'off', 'Color', 'w');
     hold on;
     idxList = find(nonStraightMask);
     for k = 1:numel(idxList)
@@ -210,11 +210,11 @@ if any(nonStraightMask)
     ylabel('|S21| (dB)');
     grid on;
     legend('Location', 'best');
-    saveas(fig, fullfile(figureDir, sprintf('PhaseI_THRU_S21_Magnitude_ArcDiag_%s.jpg', bandResult.band)));
-    savefig(fig, fullfile(figureDir, sprintf('PhaseI_THRU_S21_Magnitude_ArcDiag_%s.fig', bandResult.band)));
+    exportgraphics(fig, strrep(fullfile(figureDir, sprintf('PhaseI_THRU_S21_Magnitude_ArcDiag_%s.fig', bandResult.band)), '.fig', '.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, sprintf('PhaseI_THRU_S21_Magnitude_ArcDiag_%s.fig', bandResult.band)));
     close(fig);
 
-    fig = figure('Visible', 'on');
+    fig = figure('Visible', 'off', 'Color', 'w');
     hold on;
     for k = 1:numel(idxList)
         idx = idxList(k);
@@ -229,8 +229,8 @@ if any(nonStraightMask)
     ylabel('Phase (deg)');
     grid on;
     legend('Location', 'best');
-    saveas(fig, fullfile(figureDir, sprintf('PhaseI_THRU_S21_Phase_ArcDiag_%s.jpg', bandResult.band)));
-    savefig(fig, fullfile(figureDir, sprintf('PhaseI_THRU_S21_Phase_ArcDiag_%s.fig', bandResult.band)));
+    exportgraphics(fig, strrep(fullfile(figureDir, sprintf('PhaseI_THRU_S21_Phase_ArcDiag_%s.fig', bandResult.band)), '.fig', '.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+    save_visible_fig(fig, fullfile(figureDir, sprintf('PhaseI_THRU_S21_Phase_ArcDiag_%s.fig', bandResult.band)));
     close(fig);
 end
 end
@@ -254,7 +254,7 @@ s22_34 = squeeze(e34(2, 2, :));
 sigma12 = compute_sigma_max_local(e12);
 sigma34 = compute_sigma_max_local(e34);
 
-fig = figure('Visible', 'on');
+fig = figure('Visible', 'off', 'Color', 'w');
 subplot(2, 2, 1);
 plot(freqGHz, 20 * log10(abs(s11_12)), 'LineWidth', 1.6, 'DisplayName', 'E12'); hold on;
 plot(freqGHz, 20 * log10(abs(s11_34)), '--', 'LineWidth', 1.6, 'DisplayName', 'E34');
@@ -292,8 +292,8 @@ grid on;
 legend('Location', 'best');
 
 sgtitle(sprintf('Phase I Embedding Comparison - %s GHz', bandResult.band));
-saveas(fig, fullfile(figureDir, sprintf('PhaseI_EmbeddingComparison_%s.jpg', bandResult.band)));
-savefig(fig, fullfile(figureDir, sprintf('PhaseI_EmbeddingComparison_%s.fig', bandResult.band)));
+exportgraphics(fig, strrep(fullfile(figureDir, sprintf('PhaseI_EmbeddingComparison_%s.fig', bandResult.band)), '.fig', '.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+save_visible_fig(fig, fullfile(figureDir, sprintf('PhaseI_EmbeddingComparison_%s.fig', bandResult.band)));
 close(fig);
 end
 
@@ -309,7 +309,7 @@ function plot_refinement_diagnostics(figureDir, bandResult)
 freqGHz = bandResult.embedding_diagnostics.freq / 1e9;
 diag = bandResult.refine_diagnostics;
 
-fig = figure('Visible', 'on');
+fig = figure('Visible', 'off', 'Color', 'w');
 subplot(2, 2, 1);
 plot(freqGHz, diag.abs_s11_shift, 'LineWidth', 1.6);
 title('|\Delta S11|');
@@ -350,6 +350,12 @@ plot(freqGHz, diag.thru_reconstruction_error, 'LineWidth', 1.2, 'DisplayName', '
 if any(~isnan(diag.p34_line_match_error))
     plot(freqGHz, diag.p34_line_match_error, 'LineWidth', 1.2, 'DisplayName', 'P34 line err');
 end
+if isfield(diag, 'sim_ref_error') && any(~isnan(diag.sim_ref_error))
+    plot(freqGHz, diag.sim_ref_error, '--', 'LineWidth', 1.1, 'DisplayName', 'Sim ref err');
+end
+if isfield(diag, 'sim_raw_error') && any(~isnan(diag.sim_raw_error))
+    plot(freqGHz, diag.sim_raw_error, '--', 'LineWidth', 1.1, 'DisplayName', 'Sim raw err');
+end
 title('Embedding / Thru Diagnostics');
 xlabel('Frequency (GHz)');
 ylabel('Metric');
@@ -357,7 +363,18 @@ grid on;
 legend('Location', 'best');
 
 sgtitle(sprintf('Phase I Refinement Diagnostics - %s GHz', bandResult.band));
-saveas(fig, fullfile(figureDir, sprintf('PhaseI_RefinementDiagnostics_%s.jpg', bandResult.band)));
-savefig(fig, fullfile(figureDir, sprintf('PhaseI_RefinementDiagnostics_%s.fig', bandResult.band)));
+exportgraphics(fig, strrep(fullfile(figureDir, sprintf('PhaseI_RefinementDiagnostics_%s.fig', bandResult.band)), '.fig', '.jpg'), 'Resolution', 300, 'BackgroundColor', 'white');
+save_visible_fig(fig, fullfile(figureDir, sprintf('PhaseI_RefinementDiagnostics_%s.fig', bandResult.band)));
 close(fig);
 end
+
+function save_visible_fig(fig, filename)
+prevVisible = get(fig, 'Visible');
+set(fig, 'Visible', 'on');
+drawnow;
+savefig(fig, filename);
+set(fig, 'Visible', prevVisible);
+end
+
+
+

@@ -1,0 +1,18 @@
+Phase I GLOBALWIN THRU smoothing summary
+
+EXTRACTED_THRU_P1P2_STRAIGHT:
+  fit21 points: 4072
+  fit12 points: 4072
+
+EXTRACTED_THRU_P1P4_ARC:
+  fit21 points: 4072
+  fit12 points: 4072
+
+EXTRACTED_THRU_P1P4_DIAGONAL:
+  fit21 points: 4072
+  fit12 points: 4072
+
+EXTRACTED_THRU_P3P4_STRAIGHT:
+  fit21 points: 4072
+  fit12 points: 4072
+

@@ -1,0 +1,32 @@
+Phase I Global Winner Selection (single port across all bands)
+
+OPEN:
+  Winner: P2
+  Score P1: 27.3519
+  Score P2: 22.3138
+  Reason: Global winner by aggregated normalized weighted score (P2 selected)
+  Bands used: 0-67, 110-170, 67-115
+    0-67: p1_norm=8.49554, p2_norm=7.20056
+    110-170: p1_norm=7.03867, p2_norm=8.02548
+    67-115: p1_norm=11.8177, p2_norm=7.08775
+
+SHORT:
+  Winner: P2
+  Score P1: 30.6884
+  Score P2: 24.9336
+  Reason: Global winner by aggregated normalized weighted score (P2 selected)
+  Bands used: 0-67, 110-170, 67-115
+    0-67: p1_norm=7.2711, p2_norm=10.784
+    110-170: p1_norm=13.3299, p2_norm=6.88984
+    67-115: p1_norm=10.0874, p2_norm=7.25977
+
+LOAD:
+  Winner: P2
+  Score P1: 22.1607
+  Score P2: 21.0909
+  Reason: Global winner by aggregated normalized weighted score (P2 selected)
+  Bands used: 0-67, 110-170, 67-115
+    0-67: p1_norm=7.51852, p2_norm=6.97653
+    110-170: p1_norm=8.53861, p2_norm=6.09358
+    67-115: p1_norm=6.10356, p2_norm=8.0208
+

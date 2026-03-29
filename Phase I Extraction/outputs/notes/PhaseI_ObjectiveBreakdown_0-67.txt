@@ -6,13 +6,13 @@ Best eps_eff: 3.73
 Best Zc: 50 ohm
 
 Objective terms at optimum:
-open_short_passivity = 0.000591504826
-open_short_target = 0.000789392574
-load_magnitude = 0.0159028475
-straight_line_match = 0.000920204025
-straight_return_loss = 0.0115320503
-embedding_passivity = 4.91320654e-05
+open_short_passivity = 0.000591433956
+open_short_target = 0.000790390073
+load_magnitude = 0.0159011858
+straight_line_match = 0.000920201475
+straight_return_loss = 0.0115321439
+embedding_passivity = 4.91271688e-05
 alpha_regularization = 0.0025
 eps_regularization = 0.00075625
 zc_regularization = 0
-total_score = 0.255955074
+total_score = 0.255965352

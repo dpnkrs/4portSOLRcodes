@@ -1,0 +1,471 @@
+Chapter 5
+
+Experimental Validation of Four-Port SOLR
+Calibration
+
+   Chapter 3 established the experimental foundation for the four-port measurement
+and validation work that follows by introducing the THz measurement facility, the four-
+port measurement hardware, the instrument-side calibration hierarchy, and the practical
+limitations of existing on-chip calibration approaches. Building on that measurement
+background, Chapter 4 developed the four-port SOLR framework itself, including the
+error-model basis, the design of the one-port and reciprocal standards, and the defi-
+nition of the on-chip standard plane after removal of the common probing pads and
+access network. The present chapter turns from that design-stage and methodology-
+stage development to measurements on the taped-out calibration die. The chapter aims
+to determine whether the extracted one-port standards are sufficiently well behaved, re-
+peatable, and distinct to support a stable measured SOLR calibration over the intended
+frequency range.
+   A central point of the experimental validation is that the Chapter 4 EM and virtual-
+mTRL results are retained here as design references, but not as absolute ground-truth
+baselines for the fabricated standards. At mmWave and D-band frequencies, calibrated
+on-wafer results are known to depend on probe geometry, touchdown conditions, neigh-
+boring structures, substrate environment, and reference-plane placement [61,70,73]. For
+that reason, the quality of the fabricated standards is assessed here primarily through
+measurement-led criteria: physical plausibility of the extracted responses, separation
+among the standards on the Smith Chart complex reflection plane, repeatability across
+redundant realizations, conditioning of the resulting SOL solution matrix, and the effect
+of the extracted standards on the downstream calibration itself [83, 86, 89]. Simulation
+is used later in the section as a secondary trend check, but not as the sole measure of
+correctness.
+
+
+                                           83
+                                                                                       84
+
+
+5.1     Measurement and Characterization of the S/O/L Cal-
+        ibration Standards
+   This section presents the experimental characterization of the fabricated Short,
+Open, and Load standards after removal of the common on-die embedding between
+the probe pads and the intended standard-definition plane. Rather than treating the
+standards as ideal objects whose quality can be judged only by direct comparison to
+simulation, they are treated here as measured and extracted calibration standards. The
+relevant question is therefore not whether the fabricated responses perfectly reproduce
+the Chapter 4 design curves, but whether the extraction yields physically plausible,
+repeatable, and sufficiently distinct one-port definitions at the chosen on-chip reference
+plane to support a stable SOLR calibration. This interpretation is consistent with prior
+on-wafer metrology work showing that calibrated results depend not only on nominal
+standard design, but also on probe geometry, touchdown conditions, neighboring struc-
+tures, and the exact placement of the reference plane [61, 70, 73].
+
+5.1.1   Measurement Model, Notation, and Extraction Basis
+   The raw two-port measurements of the fabricated structures are acquired and stored
+in conventional scattering-parameter form. For any two-port block X, let
+                                         "                     #
+                                          s11,X (f ) s12,X (f )
+                             SX (f ) =                                               (5.1)
+                                          s21,X (f ) s22,X (f )
+
+denote its 2×2 scattering matrix, where sij,X (f ) is the scalar scattering parameter from
+port j to port i, and f is frequency. The corresponding scattering-transfer matrix of
+the same two-port is denoted by TX (f ) [100].
+   Although the measurements are obtained in S-parameter form, the straight-Thru
+extraction is written in T-matrix form because the measured thru is modeled as a phys-
+ical cascade of sub-networks. In particular, the measured straight Thru is interpreted
+as a left embedding half-network, an explicit center-line section, and a right embedding
+half-network. In transfer form, these cascaded sections combine directly through matrix
+multiplication, which makes extraction and de-embedding of the common embedding
+substantially more natural than in ordinary S-parameter form [101–103]. Under the
+adopted symmetry assumption, the left and right embedding halves are represented by
+the same transfer matrix TE (f ), and the measured straight Thru is written as
+
+                          Tthru,meas (f ) = TE (f ) TL (f ) TE (f ),                 (5.2)
+                                                                                        85
+
+
+where Tthru,meas (f ) is the scattering-transfer matrix of the measured straight Thru,
+TE (f ) is the scattering-transfer matrix of one embedding half-network, and TL (f ) is
+the scattering-transfer matrix of the explicit center-line section of the straight Thru. In
+the final extraction baseline, TL (f ) is constructed from the physical 25.44 µm center
+section, while the remaining pads, vias, and local transitions are absorbed into TE (f ).
+   The transmission behavior of the embedding is identified from the measured straight
+Thru together with the explicit 25.44 µm line section. After the initial straight-Thru
+factorization and bandwise line-model fitting, the de-embedded Thru responses were
+largely well behaved, but the de-embedded Open and Short remained the main phys-
+ical concern. However, the measured straight Thru may not, by itself, be sufficiently
+constraining the reflective behavior at the two sides of the embedding network. In
+the reflective-refinement stage, the embedding is updated selectively rather than re-
+estimated in a fully unconstrained way. The transmission terms of the embedding
+remain anchored to the straight-Thru-derived baseline, while the reflective terms are
+adjusted using the measured Open, Short, and Load responses. The refinement is
+guided by physically motivated criteria: the extracted Open and Short should remain
+strongly reflective and near the unit circle, the extracted Load should remain compar-
+atively small, the updated embedding should remain smooth across frequency, and the
+final result should stay close to the original thru-derived baseline unless the measured
+SOL data provides clear evidence to move it.
+
+
+
+
+Figure 5.1: One-port standard extraction procedure: probe-tip-calibrated measurement
+of the fabricated straight Thru and one-port standards, identification of the common
+embedding from the straight Thru with the explicit 25.44 µm center-line model, reflec-
+tive refinement using measured Open/Short/Load data, de-embedding to the common
+standard-definition plane, and generation of both bandwise extracted and stitched full-
+span standard representations.
+
+   The next stage of the extraction therefore treated the one-port standards not merely
+                                                                                               86
+
+
+as outputs of the de-embedding, but also as additional measurements used to improve
+the reflective part of the embedding model. The reflective behavior is then refined
+using the measured Open, Short, and Load responses, since the straight Thru alone
+constrains the transmission terms more strongly than the reflection terms. The final
+de-embedding procedure anchors the forward and reverse transmission behavior to the
+thru-derived solution, while the reflective terms are adjusted so that the extracted one-
+port standards become more physically consistent at the intended standard plane. The
+transmission-led embedding extraction followed by reflective refinement is well aligned
+with prior calibration-kit and de-embedding practice for mmWave integrated-circuit
+measurements [101, 103].
+   For a one-port standard, let Γmeas (f ) denote the measured reflection coefficient at
+the probe-tip-calibrated plane, and let Γstd (f ) denote the extracted reflection coefficient
+after de-embedding to the common standard-definition plane. Using the scattering
+description of the embedding half-network,
+                                             "                        #
+                                                 s11,E (f ) s12,E (f )
+                                 SE (f ) =                                ,                  (5.3)
+                                                 s21,E (f ) s22,E (f )
+
+the extracted one-port response is written as
+
+                                              Γmeas (f ) − s11,E (f )
+               Γstd (f ) =                                                               .   (5.4)
+                             s12,E (f )s21,E (f ) + s22,E (f ) [Γmeas (f ) − s11,E (f )]
+
+Here, s11,E (f ), s12,E (f ), s21,E (f ), and s22,E (f ) are the scalar elements of the embedding
+half-network scattering matrix SE (f ). Equation (5.4) removes the direct front-face
+reflection of the embedding and the forward/reverse loading through the embedding
+network, yielding frequency-dependent definitions of Γopen (f ), Γshort (f ), and Γload (f )
+at the same on-chip plane later used by the SOLR solver.
+   Two forms of the extracted standards are retained in the discussion that follows.
+The first is the accepted bandwise extraction, which is the primary characterization
+result within each measurement band after comparison of redundant realizations. The
+second is a stitched full-span representation, which provides a smooth cross-band view for
+reporting and downstream calibration use. The stitched curve is therefore interpreted
+as a regularized aggregate of the accepted bandwise measurements rather than as a
+replacement for them.
+   A final point of interpretation is that no hard passivity projection is imposed on
+the accepted extracted one-port standards. If mild non-passive behavior appears after
+de-embedding, it is treated as a diagnostic of residual model limitation or measurement
+uncertainty rather than being hidden by a final projection step. This choice preserves
+                                                                                       87
+
+
+the distinction between characterizing the fabricated standard and post-correcting it into
+an idealized response.
+
+5.1.2   Evaluation Framework for the Extracted Standards
+   Because the standards are obtained through a measurement-led extraction rather
+than by direct ideal assignment, their quality is assessed here through the following
+complementary criteria:
+
+  1. Physical plausibility. The extracted standards should remain physically inter-
+     pretable at the adopted reference plane. The Open and Short are expected to
+     remain strongly reflective and to follow smooth capacitive and inductive trajec-
+     tories, respectively, on the Smith chart. The Load should remain near the chart
+     center over the usable frequency range, with positive real impedance and limited
+     reactance [61, 70].
+
+  2. Separation and identifiability. The Open, Short, and Load must remain suf-
+     ficiently distinct in the complex reflection plane so that the one-port SOL system
+     remains well posed. If the extracted Load drifts too close to either reflective
+     standard, or if the Open and Short collapse toward similar trajectories, the solved
+     error terms become increasingly sensitive to measurement noise and de-embedding
+     error [103, 104].
+
+  3. Repeatability across redundant realizations. Since the one-port standards
+     were measured redundantly from opposite sides of the embedding, the spread
+     among those extractions becomes part of the calibration-quality assessment rather
+     than a secondary detail. Small spread indicates that the extracted standard is pri-
+     marily determined by the physical structure, while large spread indicates residual
+     sensitivity to embedding uncertainty, touchdown variation, or model incomplete-
+     ness [61, 73].
+
+  4. Extraction consistency. The extracted standards should remain consistent with
+     the underlying thru-derived embedding model. In practice, this means that reflec-
+     tive refinement should improve the physical plausibility of the Open, Short, and
+     Load without materially degrading the transmission behavior already established
+     by the straight Thru [101, 103].
+
+  5. Numerical conditioning of the one-port SOL solve. The extracted stan-
+     dards are ultimately used as the known reflection coefficients in the one-port three-
+     term calibration model. Let Γk (f ) denote the extracted reflection coefficient of
+                                                                                                88
+
+
+   standard k ∈ {O, S, L} at the standard-definition plane, and let Γ′k (f ) denote the
+   corresponding measured reflection coefficient at the probe-tip-calibrated plane.
+   Using the standard three-term one-port model, the unknown error terms e00 (f ),
+   e11 (f ), and ∆e (f ) satisfy
+
+                                   ASOL (f ) xSOL (f ) = bSOL (f ),                           (5.5)
+
+   where                                                          ′        
+                                   e00 (f )                         ΓO (f )
+                      xSOL (f ) = e11 (f ) ,         bSOL (f ) =  Γ′S (f )  ,             (5.6)
+                                                                           
+
+                                    ∆e (f )                          Γ′L (f )
+   and
+                                       1 ΓO (f )Γ′O (f ) −ΓO (f )
+                                                                 
+
+                          ASOL (f ) = 1 ΓS (f )Γ′S (f ) −ΓS (f )  .                         (5.7)
+                                                                 
+
+                                           1   ΓL (f )Γ′L (f )   −ΓL (f )
+
+   Here, ASOL (f ) is the 3 × 3 coefficient matrix of the one-port SOL solve, xSOL (f )
+   is the vector of one-port error terms, and bSOL (f ) is the measured-data vector.
+   The robustness of this solve is evaluated through the 2-norm condition number
+
+                                                                        σmax (ASOL (f ))
+      κSOL (f ) = κ2 (ASOL (f )) = ∥ASOL (f )∥2 ∥A−1
+                                                  SOL (f )∥2 =                           ,    (5.8)
+                                                                        σmin (ASOL (f ))
+
+   where σmax (·) and σmin (·) are the largest and smallest singular values, respectively.
+   A small value of κSOL (f ) indicates that the solved error terms are relatively in-
+   sensitive to small perturbations in the extracted standards, while a large value
+   indicates that small errors in the Open, Short, or Load can be strongly amplified
+   in the resulting calibration [104, 105].
+
+6. Model closure residual. After solving for e00 (f ), e11 (f ), and ∆e (f ), the corre-
+   sponding reconstructed measured reflection coefficient of standard k is
+
+                     b ′ (f ) = e00 (f ) − ∆e (f )Γk (f ) ,
+                     Γ                                            k ∈ {O, S, L},              (5.9)
+                       k
+                                   1 − e11 (f )Γk (f )
+
+   and the closure residual is defined as
+
+                                                          b ′ (f ) .
+                                     rk (f ) = Γ′k (f ) − Γ k                                (5.10)
+
+         b ′ (f ) is the reconstructed measured reflection coefficient predicted by the
+   Here, Γ k
+   solved one-port model, and rk (f ) is the corresponding scalar residual magnitude.
+                                                                                         89
+
+
+    This residual provides an internal lack-of-fit check for the one-port calibration
+    model. In the present work, it is interpreted together with κSOL (f ): a small
+    residual is most meaningful when the underlying system is also well conditioned
+    [104, 105].
+
+ 7. Simulation comparison as a secondary reference. Comparison to the Chap-
+    ter 4 EM and virtual-mTRL results is retained as a trend-level reference only. It
+    remains useful to verify that the measured Open, Short, and Load follow the broad
+    behavior anticipated in Chapter 4, such as the direction of Smith-chart rotation
+    and the approximate onset of Load degradation. However, because both the ex-
+    tracted reference plane and the fabricated probing environment differ from the
+    idealized EM setup, disagreement with simulation is interpreted cautiously and is
+    not by itself treated as evidence of extraction failure [61, 70, 73].
+
+
+  Table 5.1: Proposed analyses for evaluating the extracted one-port standards.
+
+Metric                    Purpose                                            Result Place-
+                                                                             holder
+Physical plausibility     Verify smooth and interpretable                    [TBD]
+                          Open/Short/Load behavior at the
+                          extracted reference plane
+Standard separation       Confirm that Open, Short, and Load re-             [TBD]
+                          main sufficiently distinct in the complex
+                          Γ-plane
+Redundant-                Quantify spread across redundant real-             [TBD]
+measurement         re-   izations and repeated touchdowns
+peatability
+Extraction consistency    Assess whether reflective refinement im-           [TBD]
+                          proves one-port behavior while remain-
+                          ing consistent with the thru-derived em-
+                          bedding
+SOL solve condition-      Evaluate κSOL (f ) = κ2 (ASOL (f )) versus         [TBD]
+ing                       frequency
+Closure residual                                         b ′ (f )| for k ∈
+                          Evaluate rk (f ) = |Γ′k (f ) − Γ k                 [TBD]
+                          {O, S, L}
+Simulation        trend   Check broad trend agreement without                [TBD]
+agreement                 using simulation as absolute truth
+                                                                                       90
+
+
+
+
+Figure 5.2: Placeholder for a figure showing, for each of the Open, Short, and Load
+standards, the accepted bandwise extracted data together with the stitched full-span
+representation used for continuity and downstream calibration.
+
+
+5.1.3    Measured Open and Short Standards
+    The Open and Short serve as the strongly reflective standards of the one-port set
+and are therefore judged primarily by their smoothness, repeatability, and distinct-
+ness at the extracted reference plane. The Open is expected to trace a predominantly
+capacitive trajectory on the Smith chart, while the Short is expected to trace a pre-
+dominantly inductive trajectory, with both remaining close to the unit circle over most
+of the usable band. The central experimental question is not whether either standard
+perfectly overlays the Chapter 4 design reference, but whether the extracted responses
+remain physically plausible and sufficiently distinct to support a robust reflectometer
+solve [61, 103].
+    The following analyses should be reported for the Open and Short:
+
+   • Smith-chart trajectory and reflection magnitude. Plot the accepted band-
+      wise and stitched representations of the extracted Open and Short on the Smith
+      chart and report |Γopen | and |Γshort | versus frequency.
+      Result placeholder: The extracted Open remained above                   in |Γ| up to
+               GHz, while the extracted Short remained above          up to         GHz.
+      Both standards exhibited                   Smith-chart trajectories, with the first
+      noticeable irregularities appearing near          GHz.
+
+
+
+   • Effect of reflective refinement. Compare the final extracted Open and Short
+                                                                                     91
+
+
+     against the earlier thru-anchored extraction to show whether reflective refinement
+     improves physical plausibility.
+     Result placeholder: Relative to the earlier thru-only extraction, the final ex-
+     traction produced                   improvement in the Open and Short responses,
+     most clearly visible in                 .
+
+
+
+   • Redundant-measurement agreement. Overlay redundant realizations where
+     available and document the selected representation in each band.
+     Result placeholder: For the Open, the agreement between redundant real-
+     izations remained within               in magnitude and             in phase below
+             GHz. For the Short, the corresponding spread was              .
+
+
+
+   • Contribution to one-port conditioning. Relate the continued separation of
+     the Open and Short from each other and from the Load to the behavior of κSOL (f ).
+     Result placeholder: Across the frequency range                 , the Open and Short
+     remained sufficiently separated from each other and from the Load such that
+     κSOL (f ) stayed below            . Above            GHz, the conditioning degraded
+     primarily because                  .
+
+
+
+   • Comparison to Chapter 4 trends. Include measured-versus-simulated overlays
+     as secondary references only.
+     Result placeholder: Relative to the Chapter 4 design reference, the measured
+     Open and Short showed                  agreement in trajectory and magnitude trend,
+     while the main discrepancy was                   .
+
+
+5.1.4   Measured Load Standard
+   The Load is the most critical one-port standard in the kit because it determines how
+well the one-port system remains anchored near the center of the Smith chart. Unlike the
+Open and Short, the Load is not judged only by visual proximity to Γ = 0. A practically
+useful extracted Load may remain imperfect, provided that it stays sufficiently close
+to the center of the Smith chart, sufficiently repeatable across redundant realizations,
+                                                                                       92
+
+
+
+
+Figure 5.3: Placeholder for a figure showing the extracted Open and Short responses, for
+example: (a) Smith-chart loci of accepted bandwise and stitched results, (b) |Γ| versus
+frequency, (c) phase versus frequency, and (d) comparison between earlier thru-only
+extraction, final extraction baseline, and Chapter 4 design-reference simulation.
+
+
+and sufficiently distinct from the reflective standards to keep the one-port solve well
+conditioned [103,104]. In that sense, the useful bandwidth of the one-port kit is expected
+to be set primarily by the extracted Load.
+   The following analyses should be reported for the Load:
+
+   • Reflection magnitude and extracted impedance. Report |Γload (f )| together
+     with the extracted impedance
+
+                                                   1 + Γload (f )
+                                 Zload (f ) = Z0                  ,                (5.11)
+                                                   1 − Γload (f )
+
+     where Z0 is the reference impedance of the measurement system.
+     Result placeholder: The extracted Load remained below                      in |Γ| up
+     to          GHz. Over this range, ℜ{Zload (f )} remained between                 and
+              Ω, while ℑ{Zload (f )} stayed within              Ω.
+
+
+
+   • Redundant-measurement repeatability. Quantify the spread of the extracted
+     Load across redundant realizations.
+     Result placeholder: The redundant-measurement spread of the extracted Load
+     remained within           below          GHz, increasing to          near the upper
+     edge of the band.
+                                                                                        93
+
+
+   • Impact on one-port conditioning. Evaluate κSOL (f ) together with the Load
+     observables to identify the frequency region where the Load ceases to remain
+     sufficiently distinct from the reflective standards.
+     Result placeholder: The one-port system remained well conditioned up to
+             GHz, with κSOL (f ) below         . A rapid increase occurred near         GHz
+     and coincided with                in the extracted Load response.
+
+
+
+   • Model closure residual. Evaluate rL (f ) using (5.10).
+     Result placeholder: The mean closure residual for the Load was                  be-
+     low          GHz and increased to              above         GHz, indicating that
+                     .
+
+
+
+   • Comparison to Chapter 4 trends. Compare the measured Load to the Chap-
+     ter 4 design reference only at the trend level.
+     Result placeholder: The measured Load qualitatively followed the Chapter 4
+     design trend by remaining closest to the Smith-chart center below approximately
+             GHz and then drifting toward               behavior at higher frequency.
+
+
+
+
+Figure 5.4: Placeholder for a figure showing the extracted Load response, for example:
+(a) Smith-chart locus of accepted bandwise and stitched results, (b) |Γload | versus fre-
+quency, (c) extracted R and X of Zload , and (d) κSOL (f ) and closure-residual metrics
+plotted against frequency.
+                                                                                      94
+
+
+5.1.5    Adopted One-Port Standards for the Measured SOLR Calibra-
+         tion
+   Based on the analyses above, the relevant outcome for the remainder of the chapter
+is not whether the fabricated standards are ideal, but whether the extracted one-port
+definitions are sufficiently trustworthy for the measured SOLR calibration to proceed
+with confidence. The Open and Short must remain strongly reflective, smooth, and
+distinct, while the Load must remain sufficiently central and repeatable to keep the
+one-port system well posed. In this sense, the practical upper frequency limit of the
+one-port kit is determined by the measured Load behavior together with the growth of
+κSOL (f ) and the closure residual, rather than by simulation alone [61, 103, 104].
+   For the downstream SOLR implementation, the accepted bandwise standards are re-
+tained as the primary characterized one-port definitions. The stitched full-span curves
+are retained as complementary reporting products and as convenient continuous ref-
+erence views across bands. They are not interpreted as exact replacements for the
+accepted bandwise measurements. Likewise, any residual mild non-passivity in the ac-
+cepted extracted standards is retained as part of the measured characterization and
+carried forward transparently.
+Result placeholder: From the combined plausibility, repeatability, conditioning, and
+closure analyses, the extracted one-port standards are judged reliable for subsequent
+SOLR use up to           GHz. Within this range, the dominant limitation is                .
+Beyond this range, the calibration is expected to become increasingly sensitive to
+              .
+
+Table 5.2: Summary of the adopted one-port standards for the measured SOLR cali-
+bration.
+
+ Standard           Primary            Selected Re-       Usable Range       Notes
+                    Representa-        alization
+                    tion
+ Open               [Bandwise      /   [TBD]              [TBD]              [TBD]
+                    Stitched]
+ Short              [Bandwise      /   [TBD]              [TBD]              [TBD]
+                    Stitched]
+ Load               [Bandwise      /   [TBD]              [TBD]              [TBD]
+                    Stitched]
+

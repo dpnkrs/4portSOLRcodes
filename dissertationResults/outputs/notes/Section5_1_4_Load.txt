@@ -1,0 +1,11 @@
+Section 5.1.4 Measured Load Standard
+
+The extracted Load is the least ideal one-port standard, but it remains sufficiently central and sufficiently distinct from the reflective standards to keep the one-port solve well conditioned. Across the accepted bandwise results, the Load median |Gamma| ranges from 0.073 to 0.218. The extracted Load impedance spans 9.5 to 106.2 ohm in real part and -35.7 to 16.3 ohm in imaginary part across the full measured set.
+
+The Load is also the dominant repeatability limiter. Median magnitude spread between redundant extracted Loads ranges from 3.021 dB to 3.612 dB, and the held-out redundant residual median ranges from 0.0119 to 0.0362 in complex reflection coefficient. This is substantially larger than for the Open or Short and is the main reason to treat the Load as the practical uncertainty driver of the one-port kit.
+
+Even with that limitation, the numerical one-port solve remains well behaved. The accepted standards produce median kappa_SOL values of 3.35, 3.73, and 3.92 for the 0-67, 67-115, and 110-170 GHz bands, respectively, with worst-case values of 10.53, 3.97, and 5.17. This indicates that the practical upper-band concern is not matrix ill-conditioning itself, but the increasing uncertainty of the extracted Load and the associated sensitivity of the reflective standards to residual embedding error.
+
+The direct same-set closure residual is effectively machine-zero and should not be overinterpreted. The more useful validation result is the held-out Load residual, which remains modest but grows in the upper band. Accordingly, the chapter should frame the Load as acceptable for subsequent calibration use across the full measured span, while making clear that the upper D-band is the dominant caution region.
+
+Adopted bandwise Load winner ports: 0-67 GHz P2, 67-115 GHz P1, 110-170 GHz P2.

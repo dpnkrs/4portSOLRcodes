@@ -1,0 +1,11 @@
+Section 5.1.3 Measured Open and Short Standards
+
+Across the accepted bandwise extractions, the Open remains a strongly reflective standard with median |Gamma| between 0.964 and 0.994, while the Short remains strongly reflective with median |Gamma| between 1.003 and 1.015. The Open/Short pairwise separation remains high across all three bands, with median Open-to-Short spacing between 1.967 and 2.000 and minimum spacing never below 1.466.
+
+Redundant-measurement agreement is materially better for the Open and Short than for the Load. For the Open, the median magnitude spread between redundant realizations ranges from 0.051 dB to 0.432 dB; for the Short, the corresponding range is 0.043 dB to 0.524 dB. The larger phase and magnitude spread appears primarily in the upper band and near band edges, which is consistent with residual embedding sensitivity rather than with a collapse of the extracted one-port definitions.
+
+Reflective refinement improves the one-port behavior without materially degrading the thru-derived embedding. Across the three bands, the median Open improvement metric is -0.0217 to 0.0425, the median Short improvement metric is 0.0099 to 0.1090, and the median thru-reconstruction error stays between 0.0019 and 0.0093. This supports the interpretation that the final embedding remains transmission-anchored by the straight Thru while being reflectively corrected by the measured SOL data.
+
+Comparison to the Chapter 4 design references remains trend-level only. The measured Open shows median complex-plane disagreement |dGamma| of 0.214 to 0.883 across the three bands, and the Short shows 0.294 to 1.035. The measured standards therefore follow the broad expected reflective roles, but the fabricated extraction should not be judged by exact EM overlay.
+
+Adopted bandwise Open winner ports: 0-67 GHz P2, 67-115 GHz P2, 110-170 GHz P1. Adopted bandwise Short winner ports: 0-67 GHz P1, 67-115 GHz P2, 110-170 GHz P2.

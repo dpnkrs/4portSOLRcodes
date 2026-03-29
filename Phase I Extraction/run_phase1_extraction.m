@@ -41,7 +41,15 @@ if ~exist(matDir, 'dir')
     mkdir(matDir);
 end
 
+apply_white_plot_defaults();
+
 config = phase1_config(rawDataDir, touchstoneDir, matDir);
+config.simulation_priors = load_simulation_priors(scriptDir);
+if config.simulation_priors.enabled
+    fprintf('Simulation priors loaded from Simulated Data folders.\n');
+else
+    fprintf('Simulation priors not loaded (missing files/folders).\n');
+end
 inventory = discover_phase1_measurements(config.raw_data_dir);
 
 if isempty(inventory.bands)
@@ -58,6 +66,7 @@ for idxBand = 1:numel(inventory.bands)
 end
 
 plot_phase1_stitched_results(config, results);
+results = finalize_phase1_outputs(config, results);
 
 results.inventory = inventory;
 save(fullfile(matDir, 'PHASE1_RESULTS_ALL.mat'), 'results');
@@ -66,3 +75,19 @@ fprintf('Phase I extraction complete.\n');
 fprintf('Touchstone outputs: %s\n', touchstoneDir);
 fprintf('MAT outputs: %s\n', matDir);
 end
+
+function apply_white_plot_defaults()
+%APPLY_WHITE_PLOT_DEFAULTS Force high-contrast white export style.
+set(groot, 'defaultFigureVisible', 'on');
+set(groot, 'defaultFigureColor', 'w');
+set(groot, 'defaultAxesColor', 'w');
+set(groot, 'defaultAxesXColor', 'k');
+set(groot, 'defaultAxesYColor', 'k');
+set(groot, 'defaultTextColor', 'k');
+set(groot, 'defaultLegendColor', 'w');
+set(groot, 'defaultLegendTextColor', 'k');
+set(groot, 'defaultColorbarColor', 'k');
+set(groot, 'defaultAxesGridColor', [0.82, 0.82, 0.82]);
+set(groot, 'defaultAxesMinorGridColor', [0.9, 0.9, 0.9]);
+end
+

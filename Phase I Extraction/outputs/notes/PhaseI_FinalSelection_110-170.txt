@@ -1,0 +1,20 @@
+Phase I Final Selection Summary - 110-170 GHz band
+
+OPEN:
+  Winner: P1
+  Reason: Selected by passivity (P1 better)
+  P1 metrics: passivity=0.0392372, forward=9.15885e-17, globalfit=0.0489915, smooth=6.82059e-19, fit=0.00183019, sim=0.864751
+  P2 metrics: passivity=0.0496735, forward=9.43022e-17, globalfit=0.135277, smooth=5.64043e-19, fit=0.00152828, sim=0.986416
+
+SHORT:
+  Winner: P2
+  Reason: Selected by passivity (P2 better)
+  P1 metrics: passivity=0.0726744, forward=9.97074e-17, globalfit=0.122511, smooth=6.20722e-19, fit=0.00120419, sim=1.15587
+  P2 metrics: passivity=0.0281505, forward=9.31049e-17, globalfit=0.0543878, smooth=5.54265e-19, fit=0.00123903, sim=1.06227
+
+LOAD:
+  Winner: P2
+  Reason: Selected by passivity (P2 better)
+  P1 metrics: passivity=0.356629, forward=3.94024e-17, globalfit=0.148293, smooth=4.10733e-19, fit=0.00148314, sim=0.134385
+  P2 metrics: passivity=0.235207, forward=2.47878e-17, globalfit=0.031166, smooth=4.22078e-19, fit=0.00171509, sim=0.0858618
+
