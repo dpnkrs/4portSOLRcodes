@@ -27,6 +27,7 @@ for idxBand = 1:numel(config.bands)
 end
 
 results.stitched = build_stitched_outputs(config, results.bands);
+generate_phase2_switch_ratio_debug(config, results.bands);
 generate_phase2_pair_waterfall_debug(config, results.bands);
 save_phase2_outputs(config, results);
 write_phase2_walkthrough(config, results);

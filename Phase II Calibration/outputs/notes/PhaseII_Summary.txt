@@ -2,32 +2,32 @@ Phase II Summary
 ===============
 
 Band 0-67
-  Median DUT return loss: 13.973 dB
-  Median DUT reciprocity mismatch: 0.03173
-  Coupling balance surrogate: 11.319 dB
-  Isolation surrogate: 29.182 dB
-  Holdout P1P3 DIAG mean |S21-S12|: 0.00056
-  Holdout P1P4 DIAG mean |S21-S12|: 0.00052
-  Holdout P2P3 DIAG mean |S21-S12|: 0.00044
-  Holdout P2P4 DIAG mean |S21-S12|: 0.00271
+  Median DUT return loss: 5.696 dB
+  Median DUT reciprocity mismatch: 0.00286
+  Coupling balance surrogate: 1.455 dB
+  Isolation surrogate: 21.697 dB
+  Holdout P1P3 DIAG mean |S21-S12|: 0.00114
+  Holdout P1P4 DIAG mean |S21-S12|: 0.00098
+  Holdout P2P3 DIAG mean |S21-S12|: 0.00153
+  Holdout P2P4 DIAG mean |S21-S12|: 0.00238
 
 Band 67-115
-  Median DUT return loss: 8.613 dB
-  Median DUT reciprocity mismatch: 0.22830
-  Coupling balance surrogate: 0.930 dB
-  Isolation surrogate: 15.226 dB
-  Holdout P1P3 DIAG mean |S21-S12|: 0.02202
-  Holdout P1P4 DIAG mean |S21-S12|: 0.00752
-  Holdout P2P3 DIAG mean |S21-S12|: 0.00622
-  Holdout P2P4 DIAG mean |S21-S12|: 0.00671
+  Median DUT return loss: 3.791 dB
+  Median DUT reciprocity mismatch: 0.00376
+  Coupling balance surrogate: 0.389 dB
+  Isolation surrogate: 27.049 dB
+  Holdout P1P3 DIAG mean |S21-S12|: 0.00914
+  Holdout P1P4 DIAG mean |S21-S12|: 0.00304
+  Holdout P2P3 DIAG mean |S21-S12|: 0.00327
+  Holdout P2P4 DIAG mean |S21-S12|: 0.00272
 
 Band 110-170
-  Median DUT return loss: 6.558 dB
-  Median DUT reciprocity mismatch: 0.19178
-  Coupling balance surrogate: 3.855 dB
-  Isolation surrogate: 24.299 dB
-  Holdout P1P3 DIAG mean |S21-S12|: 0.03550
-  Holdout P1P4 DIAG mean |S21-S12|: 0.00826
-  Holdout P2P3 DIAG mean |S21-S12|: 0.00978
-  Holdout P2P4 DIAG mean |S21-S12|: 0.00633
+  Median DUT return loss: 4.529 dB
+  Median DUT reciprocity mismatch: 0.00227
+  Coupling balance surrogate: 9.366 dB
+  Isolation surrogate: 36.000 dB
+  Holdout P1P3 DIAG mean |S21-S12|: 0.00718
+  Holdout P1P4 DIAG mean |S21-S12|: 0.00487
+  Holdout P2P3 DIAG mean |S21-S12|: 0.00893
+  Holdout P2P4 DIAG mean |S21-S12|: 0.00425
 

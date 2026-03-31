@@ -11,7 +11,8 @@ bandKey = matlab.lang.makeValidName(strrep(bandName, '-', '_'));
 thruNet = bandData.reference_thrus.(pairKey).(geomKey);
 freq = thruNet.freq(:);
 SthruRaw = phase2_extract_pair_submatrix(thruNet.S, pairKey);
-switchTerms = load_phase2_switch_terms(bandData.switch_terms.(pairKey).(geomKey), freq, config.switch_interp_method);
+switchTerms = load_phase2_switch_terms( ...
+    bandData.switch_terms.(pairKey).(geomKey), freq, config.switch_interp_method, pairKey, config.switch_ratio_mode);
 [SthruSwitch, switchDiag] = apply_switch_correction_2port(SthruRaw, switchTerms.gamma_forward, switchTerms.gamma_reverse, config.switch_den_floor);
 
 stdNames = {'Short', 'Open', 'Load'};
