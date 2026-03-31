@@ -1,15 +1,17 @@
 function results = run_phase1_extraction(rawDataDir)
 %RUN_PHASE1_EXTRACTION Extract de-embedded Phase I standard definitions.
 %   RESULTS = RUN_PHASE1_EXTRACTION() discovers raw measurements under
-%   "Measured Data\Raw Standards", extracts one shared embedding network per
-%   band from the straight thru, de-embeds available SOL and reciprocal thru
-%   standards, and writes Touchstone and MAT outputs under:
+%   "Measured Data\PhaseI Raw Standards" (falling back to older folder
+%   names for backward compatibility), extracts one shared embedding network
+%   per band from the straight thru, de-embeds available SOL and reciprocal
+%   thru standards, and writes Touchstone and MAT outputs under:
 %       Phase I Extraction\outputs
 %
 %   RESULTS = RUN_PHASE1_EXTRACTION(RAWDATADIR) uses a custom raw-data path.
 
 if nargin < 1 || isempty(rawDataDir)
     candidateDirs = {
+        fullfile(fileparts(mfilename('fullpath')), '..', 'Measured Data', 'PhaseI Raw Standards')
         fullfile(fileparts(mfilename('fullpath')), '..', 'Measured Data', 'Raw Standards')
         fullfile(fileparts(mfilename('fullpath')), '..', 'Measured Data', 'RawStandards')
     };
@@ -90,4 +92,3 @@ set(groot, 'defaultColorbarColor', 'k');
 set(groot, 'defaultAxesGridColor', [0.82, 0.82, 0.82]);
 set(groot, 'defaultAxesMinorGridColor', [0.9, 0.9, 0.9]);
 end
-

@@ -1,0 +1,12 @@
+Measured Data/
+Phase II Calibration/interimOutputs/
+
+# MATLAB transient/editor artifacts
+*.asv
+*.autosave
+*.m~
+
+# OS/editor clutter
+Thumbs.db
+desktop.ini
+.DS_Store

@@ -1,0 +1,49 @@
+Phase II Calibration Walkthrough
+==============================
+
+Root folder: C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Phase II Calibration
+Raw standards folder: C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Measured Data\PhaseII Raw Standards
+Switch terms folder: C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Measured Data\PhaseII Switch Terms
+DUT folder: C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Measured Data\PhaseII DUTs
+
+Processing order
+----------------
+1. Discover Phase II raw standards, switch-term CSVs, and DUTs by band.
+2. Load stitched Phase I Open/Short/Load references from the Phase I outputs folder.
+3. For each reference pair, extract the active-pair 2x2 submatrix from the measured .s4p.
+4. Parse the four wave CSV files for that pair and compute forward/reverse switch ratios as b/a at the receiver sampler.
+5. Apply switch correction to the active-pair through and the relevant one-port standard submatrices.
+6. Solve an 8-term SOLR model for that pair using the stitched Phase I reflection standards as the downstream references.
+7. Correct the active-pair submatrices of the DUT using the pair model, then assemble the corrected 4-port DUT by averaging diagonal estimates and inserting pair-specific off-diagonal terms.
+8. Correct the hold-out DIAG structures with the same pair model for validation.
+9. Stitch corrected DUT and hold-out outputs across the three bands for reporting.
+
+Important implementation details
+-------------------------------
+Reciprocal-thru files are treated as active-pair only. The named pair submatrix is used; the remaining 4-port entries are ignored.
+The orthogonal ARC measurements are the calibration references. The DIAG measurements from PhaseII DUTs are held out for validation.
+No GLOBALWIN references are used in Phase II. Only FINALFIT_*_STITCHED_FINAL.mat from Phase I are used as the standard definitions.
+DIAG hold-outs do not have dedicated switch-wave files in the provided dataset; they are corrected with the switch ratios from the corresponding ARC pair solve.
+
+Files to inspect first
+---------------------
+1. C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Phase II Calibration\outputs\mat\PHASE2_RESULTS_ALL.mat
+2. C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Phase II Calibration\outputs\notes\PhaseII_Summary.txt
+3. C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Phase II Calibration\outputs\figures\PhaseII_DUT_Diagnostics_67-115.jpg
+4. C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Phase II Calibration\outputs\touchstone\CORRECTED_LangeCoupler_STITCHED.s4p
+
+Band 0-67
+  DUT file: C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Measured Data\PhaseII DUTs\LangeCoupler_0-67.s4p
+  Median reciprocity mismatch of used references: 1.424e-18
+  Hold-out count: 4
+
+Band 67-115
+  DUT file: C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Measured Data\PhaseII DUTs\LangeCoupler_67-115.s4p
+  Median reciprocity mismatch of used references: 8.147e-18
+  Hold-out count: 4
+
+Band 110-170
+  DUT file: C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Measured Data\PhaseII DUTs\LangeCoupler_110-170.s4p
+  Median reciprocity mismatch of used references: 7.983e-18
+  Hold-out count: 4
+

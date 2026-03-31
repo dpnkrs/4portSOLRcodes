@@ -7,7 +7,7 @@ Entry point:
     run_phase1_extraction
 
 Default raw-data location:
-    ..\Measured Data\Raw Standards
+    ..\Measured Data\PhaseI Raw Standards
 
 Outputs:
     outputs\touchstone
@@ -38,3 +38,7 @@ Supported filename styles:
     Load_P1_110-170.s2p
     THRU_P1P2_STRAIGHT_0-67.s2p
     Thru_Straight_P1P2_0-67.s2p
+
+Backward-compatible raw-data fallbacks:
+    ..\Measured Data\Raw Standards
+    ..\Measured Data\RawStandards

@@ -1,0 +1,33 @@
+Phase II Summary
+===============
+
+Band 0-67
+  Median DUT return loss: 13.973 dB
+  Median DUT reciprocity mismatch: 0.03173
+  Coupling balance surrogate: 11.319 dB
+  Isolation surrogate: 29.182 dB
+  Holdout P1P3 DIAG mean |S21-S12|: 0.00056
+  Holdout P1P4 DIAG mean |S21-S12|: 0.00052
+  Holdout P2P3 DIAG mean |S21-S12|: 0.00044
+  Holdout P2P4 DIAG mean |S21-S12|: 0.00271
+
+Band 67-115
+  Median DUT return loss: 8.613 dB
+  Median DUT reciprocity mismatch: 0.22830
+  Coupling balance surrogate: 0.930 dB
+  Isolation surrogate: 15.226 dB
+  Holdout P1P3 DIAG mean |S21-S12|: 0.02202
+  Holdout P1P4 DIAG mean |S21-S12|: 0.00752
+  Holdout P2P3 DIAG mean |S21-S12|: 0.00622
+  Holdout P2P4 DIAG mean |S21-S12|: 0.00671
+
+Band 110-170
+  Median DUT return loss: 6.558 dB
+  Median DUT reciprocity mismatch: 0.19178
+  Coupling balance surrogate: 3.855 dB
+  Isolation surrogate: 24.299 dB
+  Holdout P1P3 DIAG mean |S21-S12|: 0.03550
+  Holdout P1P4 DIAG mean |S21-S12|: 0.00826
+  Holdout P2P3 DIAG mean |S21-S12|: 0.00978
+  Holdout P2P4 DIAG mean |S21-S12|: 0.00633
+

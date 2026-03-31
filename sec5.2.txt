@@ -1,0 +1,71 @@
+\section{Measurement and Characterization of the Reciprocal Standard}
+\label{sec:ch5_reciprocal}
+
+Unlike SOLT or TRL, the SOLR framework does not require the fourth standard to be an ideal zero-length thru or a fully characterized line. Instead, after the reflection behavior is established by the Short, Open, and Load standards, the remaining information is supplied by a two-port standard whose defining property is reciprocity. The sole reciprocity requirement is especially important in the present four-port probing geometry, since an adjacent-port connection is necessarily non-collinear and therefore cannot be treated as an ideal thru. A measured reciprocal structure with sufficiently low loss, smooth phase behavior, and close forward/reverse symmetry is therefore the physically meaningful fourth standard for the later SOLR implementation. \cite{solr_patent_2010,Daniel2005USF,shakya2025_apmc}.
+
+The fabricated die includes three through-like structures relevant to this role: a straight Thru, an arc Thru, and a diagonal Thru. The straight Thru serves as the best-controlled collinear reference and was already used in Section~\ref{sec:measured_sol_standards} to identify the common embedding from the probe-tip reference plane to the standard-definition plane.
+\begin{equation}
+\mathbf{A}_{\mathrm{thru,meas}}(f)=\mathbf{A}_{E}(f)\,\mathbf{A}_{L}(f)\,\mathbf{A}_{E}(f),
+\label{eq:recip_thru_embed}
+\end{equation}
+where \(\mathbf{A}_{L}(f)\) is the explicit \(25.44~\mu\mathrm{m}\) center-line model and \(\mathbf{A}_{E}(f)\) is the common embedding extracted from the measured straight Thru. Once \(\mathbf{A}_{E}(f)\) has been identified, any reciprocal candidate can be referred to the same standard-definition plane through
+\begin{equation}
+\mathbf{A}_{R,\mathrm{meas}}(f)=\mathbf{A}_{E}(f)\,\mathbf{A}_{R}(f)\,\mathbf{A}_{E}(f),
+\label{eq:recip_meas_embed}
+\end{equation}
+or equivalently,
+\begin{equation}
+\mathbf{A}_{R}(f)=\mathbf{A}_{E}^{-1}(f)\,\mathbf{A}_{R,\mathrm{meas}}(f)\,\mathbf{A}_{E}^{-1}(f).
+\label{eq:recip_deembed}
+\end{equation}
+Accordingly, the reciprocal standard is not imposed as ideal after the measurement. Rather, the fabricated structure itself is characterized experimentally after removal of the common pad, via, and short-line embedding, consistent with the measurement-based treatment adopted in Section~5.1 \cite{williams_1990_deembed,Fregonese2019tthz}.
+
+From the standpoint of the later SOLR solve, the straight Thru and the orthogonal through-like structures play different roles. The straight Thru provides the cleanest route for extracting the common embedding and therefore remains the natural collinear benchmark. The arc and diagonal Thrus, however, are the practically relevant reciprocal candidates for the orthogonal port pairs that must ultimately be calibrated in the four-port configuration. The central question of this section is therefore not whether the orthogonal reciprocal structures reproduce an ideal thru, but whether the fabricated structures remain reciprocal, well behaved, and sufficiently repeatable to serve as the reciprocal standard in the experimental SOLR implementation \cite{solr_patent_2010,Daniel2005USF,shakya2025_apmc}. 
+
+The characterization is therefore carried out using measurement-led criteria. 
+
+i. The de-embedded reciprocal candidate should satisfy
+\begin{equation}
+S_{21,R}(f) \approx S_{12,R}(f),
+\label{eq:recip_condition_meas}
+\end{equation}
+with a small reciprocity mismatch
+\begin{equation}
+\epsilon_{\mathrm{rec}}(f)=\left|S_{21,R}(f)-S_{12,R}(f)\right|.
+\label{eq:recip_mismatch}
+\end{equation}
+
+ii. The insertion loss should remain modest over the band of interest so that the reciprocal measurement does not become noise-limited in the later calibration. 
+
+iii. The phase of the transmission response should evolve smoothly with frequency, since abrupt phase ripple or non-physical oscillation would indicate residual parasitic interaction or extraction error rather than a usable calibration standard. 
+
+iv. The input and output matches should remain reasonably controlled, because excessive reflection corrupts the quality of the transmission reference. 
+
+v. The measured response should be repeatable across multiple probe landings, as a nominally reciprocal structure with poor landing repeatability is not a robust standard in practice \cite{williams2013_cal_kit_design,phung2019_probe_influence,mueller2018_probe_errors}.
+
+These criteria are particularly important for the orthogonal candidates. In mm-wave on-wafer measurements, the calibrated response of a transmission structure can be influenced by probe geometry, neighboring metal, surrounding layout, chuck environment, and higher-order parasitic coupling. Orthogonal bends and turns further increase the possibility of exciting unwanted modes or modifying return-current paths. For that reason, the final reciprocal-standard assessment must be based on the measured and de-embedded responses of the fabricated arc and diagonal structures, rather than on layout symmetry or electromagnetic simulation alone \cite{phung2019_probe_influence,mueller2018_probe_errors,Fregonese2019tthz}. At the same time, the layout was intentionally designed to reduce these effects by maintaining a common pad environment, short access transitions, and probing geometries compatible with the physical landing constraints of the four-port station \cite{shakya2025_apmc,formfactor_infinity_mech_rules}.
+
+All reciprocal candidates were measured under the same probe-tip-calibrated conditions used for the one-port standards in Section~\ref{sec:measured_sol_standards}. The straight Thru was first used to extract the common embedding \(\mathbf{A}_{E}(f)\), after which the straight, arc, and diagonal through-like structures were all referred to the same standard-definition plane using \eqref{eq:recip_deembed}. Their de-embedded responses were then compared in terms of reciprocity mismatch, insertion loss, return loss, phase smoothness, and landing-to-landing consistency. In this way, the reciprocal standard is treated on the same footing as the Short, Open, and Load: not as an assumed ideal element, but as a measured standard whose suitability must be established experimentally.
+
+% -------------------------------------------------------------------------
+% Placeholder items for measured-result insertion
+%
+% Figure placeholder:
+% De-embedded |S21| and |S12| versus frequency for the straight, arc, and
+% diagonal reciprocal candidates, including repeated landings if available.
+%
+% Figure placeholder:
+% De-embedded |S11| and |S22|, and optionally Smith-chart views, for the
+% reciprocal candidates.
+%
+% Table placeholder:
+% Summary of max/mean reciprocity mismatch, insertion loss, return loss,
+% and landing-to-landing variation for the straight, arc, and diagonal
+% structures over each frequency band.
+% -------------------------------------------------------------------------
+
+The measured results should therefore be interpreted in two stages. First, the straight Thru should be used as the reference case for a well-controlled collinear transmission structure and as a check on the consistency of the extracted embedding. Second, the arc and diagonal Thrus should be compared as competing orthogonal reciprocal standards. The preferred orthogonal structure is the one that exhibits the smallest \(\epsilon_{\mathrm{rec}}(f)\), the lowest and smoothest insertion loss, a smooth phase progression, acceptable return loss at both ports, and the best repeatability under re-landing. The remaining orthogonal candidate is still useful as a cross-check, but should not be promoted to the calibration standard if its measured behavior is systematically less stable.
+
+[Insert measured-result discussion here: identify whether the arc or diagonal Thru provides the better measured reciprocal behavior, cite the relevant figure/table, and state clearly which structure is carried forward into the SOLR implementation.]
+
+The main conclusion of this section is therefore that the reciprocal standard must be regarded as a measured transmission standard with finite electrical length, finite loss, and geometry-specific parasitics, not as an abstract ideal thru. Provided that reciprocity is preserved and the measured transmission response remains smooth and repeatable, such a structure is fully compatible with the SOLR framework and is better suited to the orthogonal four-port environment than an ideal-thru assumption. The reciprocal structure selected in this section is carried forward into Section~5.3 as the measured reciprocal standard used in the experimental implementation of the four-port SOLR routine.

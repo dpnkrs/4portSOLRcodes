@@ -1,0 +1,151 @@
+\begin{ThreePartTable}
+\begin{TableNotes}[flushleft]
+\footnotesize
+\item \textbf{Bands:} Band~1: 0.01--67\,GHz; Band~2: 67--115\,GHz (WR-10); Band~3: 110--170\,GHz (WR-6.5).
+\item \textbf{Port numbering:} P1=W, P2=E, P3=N, P4=S.
+\item \textbf{Switch-wave recording:} ``Waves'' refers to sampler-wave quantities exported as $a_k(f)$ and $b_k(f)$. For a reciprocal measurement between ports $(i,j)$, store waves for both stimulus directions at minimum: $(a_j,b_j)$ when stimulating $i$, and $(a_i,b_i)$ when stimulating $j$.
+\end{TableNotes}
+
+\renewcommand{\arraystretch}{1.08}
+\setlength{\tabcolsep}{3.5pt}
+
+{\footnotesize
+
+\begin{longtable}{@{}p{0.18\textwidth}p{0.46\textwidth}p{0.32\textwidth}@{}}
+\caption{Measurement checklist for Phase~I standard extraction and Phase~II global four-port SOLR (including switch-term wave recording). Measurements are repeated for each frequency band, with outputs stored per band. The checklist is organized by block (A--K) and includes notes on the purpose and expected outputs of each measurement/action.}
+\label{tab:tableX_measurement_checklist}\\
+\toprule
+\textbf{Block} & \textbf{Measurement / Action} & \textbf{Output / Notes}\\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Block} & \textbf{Measurement / Action} & \textbf{Output / Notes}\\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{3}{r}{\footnotesize Continued on next page}\\
+\endfoot
+
+\bottomrule
+\insertTableNotes
+\endlastfoot
+
+%-----------------------------------------
+% Phase I header row
+%-----------------------------------------
+\multicolumn{3}{@{}l@{}}{\textbf{Phase I: Calibration Standard Extraction from Probe-Tip-Calibrated Data}}\\[-2pt]
+\midrule
+
+\raggedright \textbf{A. Probe-tip calibration} &
+\raggedright Apply instrument calibration such that exported measurements are referenced to \textbf{probe tips} & {\raggedright 
+Establish probe-tip reference plane for all exported datasets in the band.}
+\\
+
+\raggedright \textbf{B. Embedding extraction} &
+\raggedright Measure straight Thru P1--P2 (W--E) &
+{\raggedright Used to extract shared embedding network $E(f)$ for the band (high-SNR anchor).}\\
+
+&
+\raggedright Measure straight Thru P3--P4 (N--S) &
+{\raggedright Cross-check consistency of extracted embedding across a second straight path.}\\
+
+\raggedright \textbf{C. S/O/L standard extraction} &
+\raggedright Measure Short/Open/Load at P1 (W) and de-embed one $E(f)$ &
+{\raggedright Extract $\Gamma_{\mathrm{short},P1}(f)$, $\Gamma_{\mathrm{open},P1}(f)$, $\Gamma_{\mathrm{load},P1}(f)$ at the on-chip standard-definition plane.}\\
+
+&
+\raggedright Measure Short/Open/Load at P2 (E) and de-embed one $E(f)$ &
+{\raggedright Extract $\Gamma_{\mathrm{short},P2}(f)$, $\Gamma_{\mathrm{open},P2}(f)$, $\Gamma_{\mathrm{load},P2}(f)$.}\\
+
+&
+\raggedright Measure Short/Open/Load at P3 (N) and de-embed one $E(f)$ &
+{\raggedright Extract $\Gamma_{\mathrm{short},P3}(f)$, $\Gamma_{\mathrm{open},P3}(f)$, $\Gamma_{\mathrm{load},P3}(f)$.}\\
+
+\raggedright \textbf{C. SOL standard extraction} &
+\raggedright Measure Short/Open/Load at P4 (S) and de-embed one $E(f)$ &
+{\raggedright Extract $\Gamma_{\mathrm{short},P4}(f)$, $\Gamma_{\mathrm{open},P4}(f)$, $\Gamma_{\mathrm{load},P4}(f)$.}\\
+
+\raggedright \textbf{D. Reciprocal standard extraction} &
+\raggedright Measure Thru P1--P2 (straight) and de-embed $E(f)$ (save full 2-port $S$) &
+{\raggedright Save de-embedded 2-port $S(f)$ for reciprocal straight standard (constraint/benchmark)}.\\
+
+&
+\raggedright Measure Thru P3--P4 (straight) and de-embed $E(f)$ (save full 2-port $S$) &
+{\raggedright Save de-embedded 2-port $S(f)$ for reciprocal straight standard.}\\
+
+&
+\raggedright Measure orthogonal Thrus and de-embed $E(f)$ (save full 2-port $S$): P1--P3, P1--P4, P2--P3, P2--P4 &
+{\raggedright Geometry is Arc or Diagonal per design; save de-embedded 2-port $S(f)$ for each orthogonal pair.}\\
+
+\raggedright \textbf{D. Hold-out geometry} &
+\raggedright Measure alternate geometry for orthogonal Thrus (Arc and Diagonal) &
+{\raggedright Enables hold-out validation: solve with one geometry, validate with the other.}\\
+
+\raggedright \textbf{E. Phase I saved outputs} &
+\raggedright Store extracted standard definitions and embedding per band &
+{\raggedright Save: (i) $\Gamma_{\mathrm{short/open/load},Pi}(f)$ for $i=1..4$, (ii) de-embedded Thru $S(f)$ for all measured pairs/geometries, (iii) \texttt{EXTRACTED\_EMBEDDING\_<Band>.mat}.}\\
+
+%-----------------------------------------
+% Phase II header row
+%-----------------------------------------
+\midrule
+\multicolumn{3}{@{}l@{}}{\textbf{Phase II: Global Four-Port SOLR in Final Orthogonal Four-Probe Geometry}}\\[-2pt]
+\midrule
+
+\raggedright \textbf{F. Cal state confirmation} &
+\raggedright Confirm SmartCal correction ON and correct Cal Set active for orthogonal probing session &
+{\raggedright Ensures exported measurements are consistent with probe-tip reference plane and session settings.}\\
+
+\raggedright \textbf{G1. Anchor switch waves} &
+\raggedright On P1--P2 straight Thru: Stimulate P1, record $(a_2,b_2)$; Stimulate P2, record $(a_1,b_1)$ &
+{\raggedright Save \texttt{SWTERM\_P1stim\_P2recv\_<Band>} and \texttt{SWTERM\_P2stim\_P1recv\_<Band>}.}\\
+
+ &
+\raggedright On P3--P4 straight Thru: Stim P3, record $(a_4,b_4)$; Stim P4, record $(a_3,b_3)$ &
+{\raggedright Save \texttt{SWTERM\_P3stim\_P4recv\_<Band>} and \texttt{SWTERM\_P4stim\_P3recv\_<Band>}.}\\
+
+\raggedright \textbf{G2. Waves during every reciprocal} &
+\raggedright During \emph{every} reciprocal-thru measurement used for the SOLR solve, save 2-port $S$ and waves for both stimulus directions &
+{\raggedright For each pair $(i,j)$: save $S$ plus waves both directions (minimum as in TableNotes).}\\
+
+\raggedright \textbf{H. SOL in final 4-probe geometry} &
+\raggedright Measure Short/Open/Load at P1 (W) &
+{\raggedright Use Phase~I extracted $\Gamma_{\mathrm{short/open/load},P1}(f)$ as standard definitions in offline solve.}\\
+
+&
+\raggedright Measure Short/Open/Load at P2 (E) &
+{\raggedright Use Phase~I extracted $\Gamma_{\mathrm{short/open/load},P2}(f)$.}\\
+
+&
+\raggedright Measure Short/Open/Load at P3 (N) &
+{\raggedright Use Phase~I extracted $\Gamma_{\mathrm{short/open/load},P3}(f)$.}\\
+
+&
+\raggedright Measure Short/Open/Load at P4 (S) &
+{\raggedright Use Phase~I extracted $\Gamma_{\mathrm{short/open/load},P4}(f)$.}\\
+
+\raggedright \textbf{I. Reciprocal Thrus for SOLR} &
+\raggedright Measure reciprocal Thrus in final 4-probe geometry (save $S$ + waves):
+\hspace{2 cm}\textit{Straight:} P1--P2, P3--P4; \hspace{2 cm}\textit{Orthogonal:} P1--P3, P1--P4, P2--P3, P2--P4 (Arc/Diag) &
+{\raggedright Global constraints for transmission tracking and reciprocity in SOLR solve.}\\
+
+\raggedright \textbf{I. Alternate geometry} &
+\raggedright Measure alternate geometry for orthogonal pairs (Arc and Diagonal) &
+{\raggedright Hold-out validation and residual diagnostics.}\\
+
+\raggedright \textbf{J. Replicas / repeatability} &
+\raggedright Replica and re-touchdown repeats (subset acceptable): SOL replicas, Thru replicas, re-touchdown cycle &
+{\raggedright Supports uncertainty estimation and repeatability assessment.}\\
+
+\raggedright \textbf{K. DUT verification} &
+\raggedright Measure Lange coupler: full 4-port $S$-parameters (16 terms) &
+{\raggedright Apply global SOLR correction and validate via symmetry/reciprocity/passivity metrics.}\\
+
+ &
+\raggedright Measure Phase Shifter: 2-port $S$-parameters (optional only for SOLR validation)  &
+{\raggedright Apply global SOLR correction and validate.}\\
+
+\end{longtable}}
+\end{ThreePartTable}

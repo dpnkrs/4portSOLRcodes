@@ -18,8 +18,8 @@ The immediate project focus is **Phase I extraction**:
   Active code for fabricated-die standard extraction.
 - `SOLR Cal/`  
   Older 2-port SOLR implementation and validation scripts from pre-fab flow.
-- `Measured Data/Raw Standards/`  
-  Current measured input data (`.s2p`) for all bands and standards.
+- `Measured Data/PhaseI Raw Standards/`  
+  Current measured Phase I input data (`.s2p`) for all bands and standards.
 - `Backup/Phase I Extraction/`  
   Backup snapshot of prior Phase I scripts.
 
@@ -112,7 +112,8 @@ The immediate project focus is **Phase I extraction**:
 
 ## Data Flow (Phase I)
 
-1. Read raw `.s2p` standards from `Measured Data/Raw Standards/`.
+1. Read raw `.s2p` standards from `Measured Data/PhaseI Raw Standards/`
+   (with backward-compatible fallback to the older folder names).
 2. Fit line model parameters per band (`alpha/eps_eff/Zc`).
 3. Extract baseline embedding `E(f)` from `THRU_P1P2_STRAIGHT`.
 4. Optionally refine `E(f)` using measured P1/P2 SOL and thru constraints.
@@ -164,7 +165,7 @@ Practical implications:
    - RF Toolbox (or compatible reader path; Phase I uses custom reader but legacy SOLR uses RF toolbox helpers)
    - Parallel Computing Toolbox (optional; code falls back without parallel)
 3. Confirm raw files exist under:
-   - `Measured Data/Raw Standards/`
+   - `Measured Data/PhaseI Raw Standards/`
 4. Run:
    - `Phase I Extraction/main_phase1_extraction.m`
 5. Inspect:
@@ -195,4 +196,3 @@ And optionally for historical rationale:
 
 - `Backup/Phase I Extraction/` preserves prior script versions for diff/recovery.
 - `SOLR Cal/` remains functional as legacy reference and has not been integrated yet with current extracted Phase I outputs.
-

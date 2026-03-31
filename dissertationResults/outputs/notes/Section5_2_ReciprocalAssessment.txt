@@ -1,0 +1,9 @@
+Section 5.2 Reciprocal Standard Assessment
+
+The reciprocal-candidate assessment is based on de-embedded two-port responses referred to the common standard-definition plane using the straight-thru-derived embedding from Section 5.1.
+
+The P1P2 straight Thru remains the cleanest collinear benchmark, with full-span mean reciprocity mismatch 0.0033, median insertion loss 0.458 dB, median worst-port return loss 26.52 dB, and phase-ripple RMS 0.509 deg. The independent P3P4 straight cross-check is visibly poorer but still well behaved relative to the orthogonal candidates.
+
+Among the orthogonal candidates, the arc and diagonal structures are close enough that the choice must be made by measured tradeoff rather than by layout symmetry alone. The arc yields full-span mean reciprocity mismatch 0.3121 versus 0.3199 for the diagonal, median insertion loss 0.591 dB versus 0.599 dB, and phase-ripple RMS 1.467 deg versus 4.971 deg, while the diagonal gives better median worst-port return loss 18.70 dB versus 13.62 dB.
+
+On balance, P1P4 Arc is the better orthogonal reciprocal candidate because it preserves slightly lower forward/reverse mismatch, lower transmission loss, and smoother phase progression, which are the primary transmission-standard criteria for the later SOLR implementation. The remaining orthogonal structure should be retained as a cross-check rather than promoted as the primary reciprocal standard.
