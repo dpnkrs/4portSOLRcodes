@@ -31,6 +31,8 @@ generate_phase2_switch_ratio_debug(config, results.bands);
 generate_phase2_pair_waterfall_debug(config, results.bands);
 generate_phase2_error_term_debug(config, results.bands);
 generate_phase2_port_reflection_debug(config, results.bands, referenceStandards);
+generate_phase2_transmission_scale_audit(config, results.bands, referenceStandards);
+generate_phase2_thru_target_consistency_debug(config, results.bands);
 save_phase2_outputs(config, results);
 write_phase2_walkthrough(config, results);
 

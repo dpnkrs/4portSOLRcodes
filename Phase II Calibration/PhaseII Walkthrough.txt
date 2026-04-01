@@ -35,12 +35,12 @@ Files to inspect first
 
 Band 0-67
   DUT file: C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Measured Data\PhaseII DUTs\LangeCoupler_0-67.s4p
-  Median reciprocity mismatch of used references: 2.094e-16
+  Median reciprocity mismatch of used references: 2.152e-16
   Hold-out count: 4
 
 Band 67-115
   DUT file: C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Measured Data\PhaseII DUTs\LangeCoupler_67-115.s4p
-  Median reciprocity mismatch of used references: 2.159e-16
+  Median reciprocity mismatch of used references: 2.328e-16
   Hold-out count: 4
 
 Band 110-170

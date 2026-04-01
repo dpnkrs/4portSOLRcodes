@@ -1,7 +1,7 @@
 Band 67-115 summary
-Median DUT return loss: 3.789 dB
-Median DUT reciprocity mismatch: 0.00345
-Isolation surrogate: 28.087 dB
+Median DUT return loss: 3.791 dB
+Median DUT reciprocity mismatch: 0.00376
+Isolation surrogate: 27.049 dB
 P1P2 STRAIGHT mean reciprocity mismatch: 0.00000
 P3P4 STRAIGHT mean reciprocity mismatch: 0.00000
 P1P3 ARC mean reciprocity mismatch: 0.00000

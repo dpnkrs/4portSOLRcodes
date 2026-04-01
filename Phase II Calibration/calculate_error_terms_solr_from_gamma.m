@@ -1,16 +1,20 @@
-function errorTerms = calculate_error_terms_solr_from_gamma(freq, measShortP1, measOpenP1, measLoadP1, measShortP2, measOpenP2, measLoadP2, reciprocalMeas, gammaShort, gammaOpen, gammaLoad, thruDelay)
+function errorTerms = calculate_error_terms_solr_from_gamma(freq, measShortP1, measOpenP1, measLoadP1, measShortP2, measOpenP2, measLoadP2, reciprocalMeas, gammaShort, gammaOpen, gammaLoad, thruDelay, branchCfg)
 %CALCULATE_ERROR_TERMS_SOLR_FROM_GAMMA Solve 8-term SOLR from measured/reference gammas.
 
 if nargin < 12 || isempty(thruDelay)
     thruDelay = 0;
 end
 
+if nargin < 13 || isempty(branchCfg)
+    branchCfg = local_branch_config();
+end
 nFreq = numel(freq);
 fields = {'e1_00', 'e1_11', 't11', 'e2_00', 'e2_11', 't22', 't21', 't12'};
 for idx = 1:numel(fields)
     errorTerms.(fields{idx}) = nan(nFreq, 1);
 end
 
+prevT21 = NaN;
 for idx = 1:nFreq
     A1 = [ ...
         1, measShortP1(idx) * gammaShort(idx), gammaShort(idx); ...
@@ -49,10 +53,8 @@ for idx = 1:nFreq
     cand1 = sqrt(t21sq);
     cand2 = -cand1;
 
-    targetPhase = angle(s21m) + 2 * pi * freq(idx) * thruDelay;
-    diff1 = abs(angle(exp(1i * (angle(cand1) - targetPhase))));
-    diff2 = abs(angle(exp(1i * (angle(cand2) - targetPhase))));
-    if diff1 <= diff2
+    [cost1, cost2] = local_branch_costs(cand1, cand2, prevT21, s21m, freq(idx), thruDelay, branchCfg);
+    if cost1 <= cost2
         errorTerms.t21(idx) = cand1;
     else
         errorTerms.t21(idx) = cand2;
@@ -60,6 +62,34 @@ for idx = 1:nFreq
 
     if abs(errorTerms.t21(idx)) >= 1e-15
         errorTerms.t12(idx) = (errorTerms.t11(idx) * errorTerms.t22(idx)) / errorTerms.t21(idx);
+        prevT21 = errorTerms.t21(idx);
     end
 end
+end
+
+function cfg = local_branch_config()
+cfg = struct('enabled', true, 'target_weight', 1.0, 'continuity_weight', 4.0);
+end
+
+function [cost1, cost2] = local_branch_costs(cand1, cand2, prevT21, s21m, freq, thruDelay, cfg)
+targetPhase = angle(s21m) + 2 * pi * freq * thruDelay;
+targetDiff1 = local_wrapped_phase_distance(angle(cand1), targetPhase);
+targetDiff2 = local_wrapped_phase_distance(angle(cand2), targetPhase);
+
+if ~cfg.enabled || ~isfinite(prevT21) || abs(prevT21) < 1e-15
+    cost1 = targetDiff1;
+    cost2 = targetDiff2;
+    return;
+end
+
+prevPhase = angle(prevT21);
+contDiff1 = local_wrapped_phase_distance(angle(cand1), prevPhase);
+contDiff2 = local_wrapped_phase_distance(angle(cand2), prevPhase);
+
+cost1 = cfg.target_weight * targetDiff1 + cfg.continuity_weight * contDiff1;
+cost2 = cfg.target_weight * targetDiff2 + cfg.continuity_weight * contDiff2;
+end
+
+function value = local_wrapped_phase_distance(phaseA, phaseB)
+value = abs(angle(exp(1i * (phaseA - phaseB))));
 end
