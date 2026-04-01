@@ -45,6 +45,6 @@ Band 67-115
 
 Band 110-170
   DUT file: C:\Users\Dipankar\Documents\MATLABExperiments\4portSOLRcodes\Measured Data\PhaseII DUTs\LangeCoupler_110-170.s4p
-  Median reciprocity mismatch of used references: 1.77e-16
+  Median reciprocity mismatch of used references: 2.256e-16
   Hold-out count: 4
 

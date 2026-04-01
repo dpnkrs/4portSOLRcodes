@@ -1,11 +1,17 @@
 function generate_phase2_port_reflection_debug(config, bandResults, referenceStandards)
-%GENERATE_PHASE2_PORT_REFLECTION_DEBUG Audit one-port measurements driving local SOLR solves.
+%GENERATE_PHASE2_PORT_REFLECTION_DEBUG Audit which one-port standard drives bad local solves.
 
 debug = struct();
-noteLines = {};
-noteLines{end + 1} = 'Phase II Port Reflection Debug Summary';
-noteLines{end + 1} = '====================================';
-noteLines{end + 1} = '';
+noteLines = {
+    'Phase II Port Reflection Debug Summary'
+    '===================================='
+    ''
+    'Interpretation of improvement metric:'
+    '  improvement = baseline corrected-thru error - corrected-thru error after'
+    '  replacing one measured O/S/L reflection with the stitched Phase I reference.'
+    '  Positive improvement means that measurement is likely contributing to the blowup.'
+    ''
+    };
 
 for idxPort = 1:numel(config.port_labels)
     portLabel = config.port_labels{idxPort};
@@ -14,21 +20,18 @@ for idxPort = 1:numel(config.port_labels)
         continue;
     end
 
-    [figRef, refSummary] = create_reference_overlay_figure(config, portLabel, entries, referenceStandards);
+    figRef = create_reference_overlay_figure(config, portLabel, entries, referenceStandards);
     save_debug_figure(figRef, fullfile(config.interim_figure_dir, sprintf('PhaseII_Debug_PortReflection_%s', portLabel)));
 
-    [figSens, sensSummary] = create_sensitivity_figure(config, portLabel, entries);
+    figSens = create_sensitivity_figure(config, portLabel, entries);
     save_debug_figure(figSens, fullfile(config.interim_figure_dir, sprintf('PhaseII_Debug_PortSensitivity_%s', portLabel)));
 
     [summaryLines, aggregateSummary] = summarize_port_entries(portLabel, entries, config.bands);
+    noteLines = [noteLines; summaryLines; {''}]; %#ok<AGROW>
 
     debug.(portLabel) = struct( ...
         'entries', {entries}, ...
-        'reference_summary', refSummary, ...
-        'sensitivity_summary', sensSummary, ...
         'aggregate', aggregateSummary); %#ok<STRNU>
-
-    noteLines = [noteLines, summaryLines, {''}]; %#ok<AGROW>
 end
 
 save(fullfile(config.interim_mat_dir, 'PHASE2_DEBUG_PORT_REFLECTION.mat'), 'debug');
@@ -55,195 +58,211 @@ for idxBand = 1:numel(bandResults)
             'Short', interpolate_reference_gamma(referenceStandards.Short, freq), ...
             'Load', interpolate_reference_gamma(referenceStandards.Load, freq));
 
+        measPort1 = pairResult.standards_measured_port1;
+        measPort2 = pairResult.standards_measured_port2;
         if sideIndex == 1
-            meas = pairResult.standards_measured_port1;
-            baselineLocalSolve = solve_local_reflection_terms(meas.Short, meas.Open, meas.Load, refs.Short, refs.Open, refs.Load);
+            meas = measPort1;
+            baselineLocal = solve_local_reflection_terms(meas.Short, meas.Open, meas.Load, refs.Short, refs.Open, refs.Load);
             tBase = pairResult.error_terms.t11(:);
         else
-            meas = pairResult.standards_measured_port2;
-            baselineLocalSolve = solve_local_reflection_terms(meas.Short, meas.Open, meas.Load, refs.Short, refs.Open, refs.Load);
+            meas = measPort2;
+            baselineLocal = solve_local_reflection_terms(meas.Short, meas.Open, meas.Load, refs.Short, refs.Open, refs.Load);
             tBase = pairResult.error_terms.t22(:);
         end
 
         phase1Target = load_phase1_thru_target(config, pairResult.geometry, pairResult.pair, bandResult.band);
-        targetS21 = squeeze(phase1Target.S(2, 1, :));
-        corrS21 = squeeze(pairResult.reference_corrected(2, 1, :));
-        baselineErr = abs(corrS21 - targetS21);
+        targetS21 = interpolate_network_element(phase1Target.freq(:), squeeze(phase1Target.S(2, 1, :)), freq);
+        correctedS21 = squeeze(pairResult.reference_corrected(2, 1, :));
+        baselineErr = abs(correctedS21 - targetS21);
 
         replacements = struct();
         stdNames = {'Open', 'Short', 'Load'};
         for idxStd = 1:numel(stdNames)
             stdName = stdNames{idxStd};
-            [modifiedTerms, modifiedMetrics] = replace_standard_and_resolve(pairResult, refs, sideIndex, stdName);
-            correctedRef = apply_error_terms_to_network(pairResult.reference_switch_corrected, modifiedTerms, config.cal_den_floor);
-            modifiedErr = abs(squeeze(correctedRef(2, 1, :)) - targetS21);
+            measPort1Mod = measPort1;
+            measPort2Mod = measPort2;
             if sideIndex == 1
+                measPort1Mod.(stdName) = refs.(stdName);
+            else
+                measPort2Mod.(stdName) = refs.(stdName);
+            end
+
+            modifiedTerms = calculate_error_terms_solr_from_gamma(freq, ...
+                measPort1Mod.Short, measPort1Mod.Open, measPort1Mod.Load, ...
+                measPort2Mod.Short, measPort2Mod.Open, measPort2Mod.Load, ...
+                pairResult.reference_switch_corrected, refs.Short, refs.Open, refs.Load, 0);
+
+            correctedRef = apply_error_terms_to_network(pairResult.reference_switch_corrected, modifiedTerms, config.cal_den_floor);
+            modifiedS21 = squeeze(correctedRef(2, 1, :));
+            modifiedErr = abs(modifiedS21 - targetS21);
+
+            if sideIndex == 1
+                localSolve = solve_local_reflection_terms(measPort1Mod.Short, measPort1Mod.Open, measPort1Mod.Load, refs.Short, refs.Open, refs.Load);
                 tModified = modifiedTerms.t11(:);
             else
+                localSolve = solve_local_reflection_terms(measPort2Mod.Short, measPort2Mod.Open, measPort2Mod.Load, refs.Short, refs.Open, refs.Load);
                 tModified = modifiedTerms.t22(:);
             end
 
             replacements.(stdName) = struct( ...
+                'local_solve', localSolve, ...
                 'error_terms', modifiedTerms, ...
-                'metrics', modifiedMetrics, ...
                 'corrected_reference', correctedRef, ...
+                'corrected_s21', modifiedS21, ...
                 'corrected_s21_error', modifiedErr, ...
                 'error_improvement', baselineErr - modifiedErr, ...
                 't_modified', tModified, ...
                 't_change_db', local_mag_db(tModified) - local_mag_db(tBase));
         end
 
-        newEntry = struct();
-        newEntry.pair = pairResult.pair;
-        newEntry.geometry = pairResult.geometry;
-        newEntry.band = bandResult.band;
-        newEntry.freq = freq;
-        newEntry.port = portLabel;
-        newEntry.side_index = sideIndex;
-        newEntry.pair_label = sprintf('%s %s (%s side)', pairResult.pair, pairResult.geometry, portLabel);
-        newEntry.measured = meas;
-        newEntry.reference = refs;
-        newEntry.baseline = struct( ...
+        entry = struct();
+        entry.port = portLabel;
+        entry.side_index = sideIndex;
+        entry.band = bandResult.band;
+        entry.freq = freq;
+        entry.pair = pairResult.pair;
+        entry.geometry = pairResult.geometry;
+        entry.pair_label = sprintf('%s %s (%s side)', pairResult.pair, pairResult.geometry, portLabel);
+        entry.measured = meas;
+        entry.reference = refs;
+        entry.phase1_target = phase1Target;
+        entry.baseline = struct( ...
+            'local_solve', baselineLocal, ...
             't_local', tBase, ...
-            'thru_error', baselineErr, ...
             'target_s21', targetS21, ...
-            'corrected_s21', corrS21, ...
-            'local_solve', baselineLocalSolve);
-        newEntry.replacements = replacements;
-        newEntry.phase1_target = phase1Target;
+            'corrected_s21', correctedS21, ...
+            'thru_error', baselineErr);
+        entry.replacements = replacements;
 
-        entries = [entries, newEntry]; %#ok<AGROW>
+        entries = [entries, entry]; %#ok<AGROW>
     end
 end
 end
 
-function [fig, summary] = create_reference_overlay_figure(config, portLabel, entries, referenceStandards)
+function fig = create_reference_overlay_figure(config, portLabel, entries, referenceStandards)
 fig = figure('Visible', config.figure_visible, 'Color', 'w');
-tiledlayout(fig, 3, 2, 'Padding', 'compact', 'TileSpacing', 'compact');
+tlo = tiledlayout(fig, 3, 2, 'Padding', 'compact', 'TileSpacing', 'compact');
 stdNames = {'Open', 'Short', 'Load'};
 entryColors = lines(numel(entries));
-summary = struct();
+
+legendHandles = gobjects(numel(entries) + 1, 1);
+legendLabels = cell(numel(entries) + 1, 1);
+legendReady = false;
+legendAxes = gobjects(1, 1);
 
 for idxStd = 1:numel(stdNames)
     stdName = stdNames{idxStd};
+    refFreqGHz = referenceStandards.(stdName).freq(:) / 1e9;
+    refGamma = referenceStandards.(stdName).gamma(:);
 
-    axMag = nexttile;
+    axMag = nexttile(tlo);
     hold(axMag, 'on');
+    grid(axMag, 'on');
     title(axMag, sprintf('%s magnitude', stdName));
     xlabel(axMag, 'Frequency (GHz)');
     ylabel(axMag, sprintf('%s |\\Gamma| (dB)', stdName));
-    grid(axMag, 'on');
     xline(axMag, 67, ':', 'Color', [0.7 0.7 0.7]);
     xline(axMag, 115, ':', 'Color', [0.7 0.7 0.7]);
+    hRef = plot(axMag, refFreqGHz, local_mag_db(refGamma), 'k-', 'LineWidth', 2.0);
 
-    refFreqGHz = referenceStandards.(stdName).freq / 1e9;
-    plot(axMag, refFreqGHz, local_mag_db(referenceStandards.(stdName).gamma), ...
-        'k-', 'LineWidth', 2.0, 'DisplayName', sprintf('%s stitched reference', stdName));
-
-    magOffsets = nan(1, numel(entries));
-    for idxEntry = 1:numel(entries)
-        trace = entries(idxEntry).measured.(stdName);
-        ref = entries(idxEntry).reference.(stdName);
-        plot(axMag, entries(idxEntry).freq / 1e9, local_mag_db(trace), ...
-            '-', 'Color', entryColors(idxEntry, :), 'LineWidth', 1.1, 'DisplayName', entries(idxEntry).pair_label);
-        magOffsets(idxEntry) = median(local_mag_db(trace) - local_mag_db(ref), 'omitnan');
-    end
-    summary.(stdName).median_mag_offset_db = median(magOffsets, 'omitnan');
-
-    axPh = nexttile;
+    axPh = nexttile(tlo);
     hold(axPh, 'on');
+    grid(axPh, 'on');
     title(axPh, sprintf('%s phase', stdName));
     xlabel(axPh, 'Frequency (GHz)');
     ylabel(axPh, sprintf('%s phase (deg)', stdName));
-    grid(axPh, 'on');
     xline(axPh, 67, ':', 'Color', [0.7 0.7 0.7]);
     xline(axPh, 115, ':', 'Color', [0.7 0.7 0.7]);
+    plot(axPh, refFreqGHz, unwrap(angle(refGamma)) * 180 / pi, 'k-', 'LineWidth', 2.0);
 
-    refPhase = unwrap(angle(referenceStandards.(stdName).gamma)) * 180 / pi;
-    plot(axPh, refFreqGHz, refPhase, 'k-', 'LineWidth', 2.0, 'DisplayName', sprintf('%s stitched reference', stdName));
-
-    phaseOffsets = nan(1, numel(entries));
-    for idxEntry = 1:numel(entries)
-        alignedPhase = align_phase_to_reference(entries(idxEntry).measured.(stdName), entries(idxEntry).reference.(stdName));
-        plot(axPh, entries(idxEntry).freq / 1e9, alignedPhase, ...
-            '-', 'Color', entryColors(idxEntry, :), 'LineWidth', 1.1, 'DisplayName', entries(idxEntry).pair_label);
-        refPhaseLocal = unwrap(angle(entries(idxEntry).reference.(stdName))) * 180 / pi;
-        phaseOffsets(idxEntry) = median(alignedPhase - refPhaseLocal, 'omitnan');
+    if ~legendReady
+        legendLabels{1} = sprintf('%s stitched Phase I reference', stdName);
+        legendAxes = axMag;
     end
-    summary.(stdName).median_phase_offset_deg = median(phaseOffsets, 'omitnan');
+
+    for idxEntry = 1:numel(entries)
+        trace = entries(idxEntry).measured.(stdName);
+        plot(axMag, entries(idxEntry).freq / 1e9, local_mag_db(trace), '-', ...
+            'Color', entryColors(idxEntry, :), 'LineWidth', 1.1);
+
+        alignedPhase = align_phase_to_reference(trace, entries(idxEntry).reference.(stdName));
+        plot(axPh, entries(idxEntry).freq / 1e9, alignedPhase, '-', ...
+            'Color', entryColors(idxEntry, :), 'LineWidth', 1.1);
+
+        if ~legendReady && idxStd == 1
+            legendLabels{idxEntry + 1} = entries(idxEntry).pair_label;
+        end
+    end
+    legendReady = true;
 end
 
-lgd = legend(findall(fig, 'Type', 'Line', '-not', 'LineStyle', ':'), 'Location', 'bestoutside');
+legendHandles(1) = plot(legendAxes, nan, nan, 'k-', 'LineWidth', 2.0);
+for idxEntry = 1:numel(entries)
+    legendHandles(idxEntry + 1) = plot(legendAxes, nan, nan, '-', 'Color', entryColors(idxEntry, :), 'LineWidth', 1.2);
+end
+lgd = legend(legendAxes, legendHandles, legendLabels, 'Location', 'eastoutside');
 set(lgd, 'Interpreter', 'none');
-sgtitle(fig, sprintf('Phase II reflection inputs vs Phase I stitched references - %s', portLabel));
+title(tlo, sprintf('Phase II reflection inputs vs stitched Phase I references - %s', portLabel));
 end
 
-function [fig, summary] = create_sensitivity_figure(config, portLabel, entries)
+function fig = create_sensitivity_figure(config, portLabel, entries)
 fig = figure('Visible', config.figure_visible, 'Color', 'w');
-tiledlayout(fig, 5, 1, 'Padding', 'compact', 'TileSpacing', 'compact');
+tlo = tiledlayout(fig, 4, 1, 'Padding', 'compact', 'TileSpacing', 'compact');
 entryColors = lines(numel(entries));
-summary = struct();
-
-ax1 = nexttile;
-hold(ax1, 'on');
-for idxEntry = 1:numel(entries)
-    plot(ax1, entries(idxEntry).freq / 1e9, local_mag_db(entries(idxEntry).baseline.t_local), ...
-        '-', 'Color', entryColors(idxEntry, :), 'LineWidth', 1.3, 'DisplayName', entries(idxEntry).pair_label);
-end
-grid(ax1, 'on');
-xline(ax1, 67, ':', 'Color', [0.7 0.7 0.7]);
-xline(ax1, 115, ':', 'Color', [0.7 0.7 0.7]);
-xlabel(ax1, 'Frequency (GHz)');
-ylabel(ax1, '|t_{local}| (dB)');
-title(ax1, sprintf('%s local tracking term used in one-port solve', portLabel));
-legend(ax1, 'Location', 'bestoutside');
-
-ax2 = nexttile;
-hold(ax2, 'on');
-baselineMedians = nan(1, numel(entries));
-for idxEntry = 1:numel(entries)
-    plot(ax2, entries(idxEntry).freq / 1e9, entries(idxEntry).baseline.thru_error, ...
-        '-', 'Color', entryColors(idxEntry, :), 'LineWidth', 1.3);
-    baselineMedians(idxEntry) = median(entries(idxEntry).baseline.thru_error, 'omitnan');
-end
-grid(ax2, 'on');
-xline(ax2, 67, ':', 'Color', [0.7 0.7 0.7]);
-xline(ax2, 115, ':', 'Color', [0.7 0.7 0.7]);
-xlabel(ax2, 'Frequency (GHz)');
-ylabel(ax2, '|S_{21,corr}-S_{21,target}|');
-title(ax2, sprintf('%s corrected-thru error before replacement', portLabel));
-summary.baseline_thru_error_median = median(baselineMedians, 'omitnan');
-
 stdNames = {'Open', 'Short', 'Load'};
+
+legendHandles = gobjects(numel(entries), 1);
+legendLabels = cell(numel(entries), 1);
+for idxEntry = 1:numel(entries)
+    legendLabels{idxEntry} = entries(idxEntry).pair_label;
+end
+legendAxes = gobjects(1, 1);
+
+ax = nexttile(tlo);
+hold(ax, 'on');
+for idxEntry = 1:numel(entries)
+    plot(ax, entries(idxEntry).freq / 1e9, entries(idxEntry).baseline.thru_error, '-', ...
+        'Color', entryColors(idxEntry, :), 'LineWidth', 1.2);
+end
+grid(ax, 'on');
+xline(ax, 67, ':', 'Color', [0.7 0.7 0.7]);
+xline(ax, 115, ':', 'Color', [0.7 0.7 0.7]);
+xlabel(ax, 'Frequency (GHz)');
+ylabel(ax, '|S_{21,corr}-S_{21,target}|');
+title(ax, sprintf('%s baseline corrected-thru error', portLabel));
+legendAxes = ax;
+
 for idxStd = 1:numel(stdNames)
     stdName = stdNames{idxStd};
-    ax = nexttile;
+    ax = nexttile(tlo);
     hold(ax, 'on');
-    improvementMedians = nan(1, numel(entries));
     for idxEntry = 1:numel(entries)
         improvement = entries(idxEntry).replacements.(stdName).error_improvement;
-        plot(ax, entries(idxEntry).freq / 1e9, improvement, ...
-            '-', 'Color', entryColors(idxEntry, :), 'LineWidth', 1.3);
-        improvementMedians(idxEntry) = median(improvement, 'omitnan');
+        plot(ax, entries(idxEntry).freq / 1e9, improvement, '-', ...
+            'Color', entryColors(idxEntry, :), 'LineWidth', 1.2);
     end
     yline(ax, 0, '--', 'Color', [0.35 0.35 0.35]);
     grid(ax, 'on');
     xline(ax, 67, ':', 'Color', [0.7 0.7 0.7]);
     xline(ax, 115, ':', 'Color', [0.7 0.7 0.7]);
     xlabel(ax, 'Frequency (GHz)');
-    ylabel(ax, '\Delta thru error');
-    title(ax, sprintf('%s improvement if %s is replaced by Phase I reference', portLabel, stdName));
-    summary.(stdName).median_improvement = median(improvementMedians, 'omitnan');
+    ylabel(ax, '\Delta error');
+    title(ax, sprintf('%s improvement if %s is replaced by stitched reference', portLabel, stdName));
 end
 
-sgtitle(fig, sprintf('Phase II replacement sensitivity through corrected reference-thru error - %s', portLabel));
+for idxEntry = 1:numel(entries)
+    legendHandles(idxEntry) = plot(legendAxes, nan, nan, '-', 'Color', entryColors(idxEntry, :), 'LineWidth', 1.2);
+end
+lgd = legend(legendAxes, legendHandles, legendLabels, 'Location', 'eastoutside');
+set(lgd, 'Interpreter', 'none');
+title(tlo, sprintf('Phase II one-port measurement sensitivity through corrected-thru error - %s', portLabel));
 end
 
 function [linesOut, aggregateSummary] = summarize_port_entries(portLabel, entries, bandList)
-linesOut = {};
-linesOut{end + 1} = sprintf('%s', portLabel);
-linesOut{end + 1} = repmat('-', 1, numel(portLabel));
-
+linesOut = {
+    sprintf('%s', portLabel)
+    repmat('-', 1, numel(portLabel))
+    };
 aggregateSummary = struct();
 stdNames = {'Open', 'Short', 'Load'};
 
@@ -254,54 +273,110 @@ for idxBand = 1:numel(bandList)
         continue;
     end
 
-    linesOut{end + 1} = sprintf('  %s', bandName);
-    aggregateImprovement = nan(1, numel(stdNames));
+    linesOut{end + 1} = sprintf('  %s', bandName); %#ok<AGROW>
+    aggregateImprovements = nan(numel(bandEntries), numel(stdNames));
+    baselineErrors = nan(numel(bandEntries), 1);
 
     for idxEntry = 1:numel(bandEntries)
         entry = bandEntries(idxEntry);
-        linesOut{end + 1} = sprintf('    %s', entry.pair_label);
-        linesOut{end + 1} = sprintf('      Median baseline |t_local| (dB): %.3f', median(local_mag_db(entry.baseline.t_local), 'omitnan'));
-        linesOut{end + 1} = sprintf('      Median baseline corrected-thru error: %.4f', median(entry.baseline.thru_error, 'omitnan'));
-        linesOut{end + 1} = sprintf('      Median rcond(A): %.4e', median(entry.baseline.local_solve.rcond, 'omitnan'));
+        baselineErrors(idxEntry) = median(entry.baseline.thru_error, 'omitnan');
+        linesOut{end + 1} = sprintf('    %s', entry.pair_label); %#ok<AGROW>
+        linesOut{end + 1} = sprintf('      Median baseline |t_local| (dB): %.3f', median(local_mag_db(entry.baseline.t_local), 'omitnan')); %#ok<AGROW>
+        linesOut{end + 1} = sprintf('      Median baseline corrected-thru error: %.4f', baselineErrors(idxEntry)); %#ok<AGROW>
+        linesOut{end + 1} = sprintf('      Median rcond(A): %.4e', median(entry.baseline.local_solve.rcond, 'omitnan')); %#ok<AGROW>
 
-        dominantStd = '';
-        dominantVal = -Inf;
+        bestStd = 'N/A';
+        bestVal = -Inf;
         for idxStd = 1:numel(stdNames)
             stdName = stdNames{idxStd};
             improvement = median(entry.replacements.(stdName).error_improvement, 'omitnan');
+            aggregateImprovements(idxEntry, idxStd) = improvement;
             tShift = median(entry.replacements.(stdName).t_change_db, 'omitnan');
             linesOut{end + 1} = sprintf('      Replace %-5s -> median thru-error improvement %.4f, median \\Delta|t| %.3f dB', ...
-                stdName, improvement, tShift);
-            aggregateImprovement(idxStd) = nansum_local([aggregateImprovement(idxStd), improvement]);
-            if improvement > dominantVal
-                dominantVal = improvement;
-                dominantStd = stdName;
+                stdName, improvement, tShift); %#ok<AGROW>
+            if improvement > bestVal
+                bestVal = improvement;
+                bestStd = stdName;
             end
         end
-        linesOut{end + 1} = sprintf('      Dominant suspect for this pair-side: %s', dominantStd);
+        linesOut{end + 1} = sprintf('      Dominant suspect for this pair-side: %s', bestStd); %#ok<AGROW>
     end
 
-    [bestVal, bestIdx] = max(aggregateImprovement);
-    if isempty(bestIdx) || ~isfinite(bestVal)
-        bestStd = 'N/A';
+    [~, worstEntryIdx] = max(baselineErrors);
+    meanImprovements = mean(aggregateImprovements, 1, 'omitnan');
+    [bestMeanVal, bestMeanIdx] = max(meanImprovements);
+    if isempty(bestMeanIdx) || ~isfinite(bestMeanVal)
+        bestMeanStd = 'N/A';
     else
-        bestStd = stdNames{bestIdx};
+        bestMeanStd = stdNames{bestMeanIdx};
     end
 
-    linesOut{end + 1} = sprintf('    Aggregate dominant suspect for %s in %s: %s', portLabel, bandName, bestStd);
+    dominantWorstStd = 'N/A';
+    if ~isempty(worstEntryIdx) && all(isfinite(aggregateImprovements(worstEntryIdx, :)))
+        [~, bestWorstIdx] = max(aggregateImprovements(worstEntryIdx, :));
+        dominantWorstStd = stdNames{bestWorstIdx};
+    elseif ~isempty(worstEntryIdx)
+        row = aggregateImprovements(worstEntryIdx, :);
+        [~, bestWorstIdx] = max(replace_nonfinite(row, -Inf));
+        if isfinite(row(bestWorstIdx))
+            dominantWorstStd = stdNames{bestWorstIdx};
+        end
+    end
+
+    linesOut{end + 1} = sprintf('    Worst baseline pair-side in %s: %s', bandName, bandEntries(worstEntryIdx).pair_label); %#ok<AGROW>
+    linesOut{end + 1} = sprintf('    Dominant suspect on worst pair-side: %s', dominantWorstStd); %#ok<AGROW>
+    linesOut{end + 1} = sprintf('    Aggregate dominant suspect for %s in %s: %s', portLabel, bandName, bestMeanStd); %#ok<AGROW>
+
+    ranking = rank_band_suspects(bandEntries, stdNames);
+    if ~isempty(ranking)
+        linesOut{end + 1} = '    Ranked suspect measurements:'; %#ok<AGROW>
+        topN = min(3, numel(ranking));
+        for idxRank = 1:topN
+            item = ranking(idxRank);
+            linesOut{end + 1} = sprintf('      %d. %s | replace %-5s | median improvement %.4f', ...
+                idxRank, item.pair_label, item.standard, item.improvement); %#ok<AGROW>
+        end
+    end
+
     aggregateSummary.(matlab.lang.makeValidName(strrep(bandName, '-', '_'))) = struct( ...
-        'dominant_standard', bestStd, ...
-        'aggregate_improvement', aggregateImprovement);
+        'worst_pair_label', bandEntries(worstEntryIdx).pair_label, ...
+        'dominant_worst_pair_standard', dominantWorstStd, ...
+        'mean_improvements', meanImprovements, ...
+        'aggregate_dominant_standard', bestMeanStd, ...
+        'ranking', ranking);
 end
 end
 
-function refs = interpolate_reference_gamma(reference, freq)
-refs = interp1(reference.freq, reference.gamma, freq, 'pchip', 'extrap');
+function ranking = rank_band_suspects(bandEntries, stdNames)
+ranking = struct('pair_label', {}, 'standard', {}, 'improvement', {});
+for idxEntry = 1:numel(bandEntries)
+    entry = bandEntries(idxEntry);
+    for idxStd = 1:numel(stdNames)
+        stdName = stdNames{idxStd};
+        improvement = median(entry.replacements.(stdName).error_improvement, 'omitnan');
+        if ~isfinite(improvement)
+            continue;
+        end
+        ranking(end + 1) = struct( ... %#ok<AGROW>
+            'pair_label', entry.pair_label, ...
+            'standard', stdName, ...
+            'improvement', improvement);
+    end
+end
+if isempty(ranking)
+    return;
+end
+[~, order] = sort([ranking.improvement], 'descend');
+ranking = ranking(order);
+end
+
+function gamma = interpolate_reference_gamma(reference, freq)
+gamma = interp1(reference.freq(:), reference.gamma(:), freq, 'pchip', 'extrap');
 end
 
 function phaseDeg = align_phase_to_reference(trace, ref)
-phaseTrace = unwrap(angle(trace));
-phaseRef = unwrap(angle(ref));
+phaseTrace = unwrap(angle(trace(:)));
+phaseRef = unwrap(angle(ref(:)));
 offsetCycles = round(median((phaseRef - phaseTrace) / (2 * pi), 'omitnan'));
 phaseDeg = (phaseTrace + 2 * pi * offsetCycles) * 180 / pi;
 end
@@ -320,38 +395,17 @@ for idx = 1:nFreq
         1, measOpen(idx) * gammaOpen(idx), gammaOpen(idx); ...
         1, measLoad(idx) * gammaLoad(idx), gammaLoad(idx)];
     b = [measShort(idx); measOpen(idx); measLoad(idx)];
+
     metrics.rcond(idx) = rcond(A);
     if metrics.rcond(idx) < 1e-12
         continue;
     end
+
     sol = A \ b;
     metrics.e00(idx) = sol(1);
     metrics.e11(idx) = sol(2);
     metrics.t(idx) = sol(3) + sol(1) * sol(2);
 end
-end
-
-function [modifiedTerms, sideMetrics] = replace_standard_and_resolve(pairResult, refs, sideIndex, stdName)
-measPort1 = pairResult.standards_measured_port1;
-measPort2 = pairResult.standards_measured_port2;
-
-if sideIndex == 1
-    measPort1.(stdName) = refs.(stdName);
-else
-    measPort2.(stdName) = refs.(stdName);
-end
-
-sideMetrics = solve_local_reflection_terms( ...
-    measPort1.Short, measPort1.Open, measPort1.Load, refs.Short, refs.Open, refs.Load);
-if sideIndex == 2
-    sideMetrics = solve_local_reflection_terms( ...
-        measPort2.Short, measPort2.Open, measPort2.Load, refs.Short, refs.Open, refs.Load);
-end
-
-modifiedTerms = calculate_error_terms_solr_from_gamma(pairResult.freq, ...
-    measPort1.Short, measPort1.Open, measPort1.Load, ...
-    measPort2.Short, measPort2.Open, measPort2.Load, ...
-    pairResult.reference_switch_corrected, refs.Short, refs.Open, refs.Load, 0);
 end
 
 function Scorrected = apply_error_terms_to_network(Sraw, errorTerms, denominatorFloor)
@@ -385,13 +439,15 @@ function values = local_mag_db(trace)
 values = 20 * log10(max(abs(trace), 1e-12));
 end
 
-function total = nansum_local(values)
-finiteMask = isfinite(values);
-if ~any(finiteMask)
-    total = NaN;
-else
-    total = sum(values(finiteMask));
+function traceOut = interpolate_network_element(freqIn, traceIn, freqOut)
+realPart = interp1(freqIn, real(traceIn), freqOut, 'linear', 'extrap');
+imagPart = interp1(freqIn, imag(traceIn), freqOut, 'linear', 'extrap');
+traceOut = complex(realPart, imagPart);
 end
+
+function out = replace_nonfinite(values, replacement)
+out = values;
+out(~isfinite(out)) = replacement;
 end
 
 function save_debug_figure(fig, basePath)

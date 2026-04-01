@@ -22,12 +22,12 @@ Band 67-115
   Holdout P2P4 DIAG mean |S21-S12|: 0.00272
 
 Band 110-170
-  Median DUT return loss: 4.529 dB
-  Median DUT reciprocity mismatch: 0.00227
-  Coupling balance surrogate: 9.366 dB
-  Isolation surrogate: 36.000 dB
-  Holdout P1P3 DIAG mean |S21-S12|: 0.00718
-  Holdout P1P4 DIAG mean |S21-S12|: 0.00487
-  Holdout P2P3 DIAG mean |S21-S12|: 0.00893
-  Holdout P2P4 DIAG mean |S21-S12|: 0.00425
+  Median DUT return loss: 5.377 dB
+  Median DUT reciprocity mismatch: 0.00412
+  Coupling balance surrogate: 0.036 dB
+  Isolation surrogate: 26.620 dB
+  Holdout P1P3 DIAG mean |S21-S12|: 0.00659
+  Holdout P1P4 DIAG mean |S21-S12|: 0.00927
+  Holdout P2P3 DIAG mean |S21-S12|: 0.00836
+  Holdout P2P4 DIAG mean |S21-S12|: 0.00833
 
