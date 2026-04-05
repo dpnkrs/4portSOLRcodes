@@ -84,7 +84,7 @@ for idxPair = 1:numel(pairs)
 
         freq = pairResult.freq(:);
         freqGHz = freq / 1e9;
-        target = pairResult.reference_phase1_target;
+        target = load_phase1_target_for_debug(config, geomKey, pairKey, bandResults{idxBand}.band);
         rawS21 = squeeze(pairResult.reference_raw(2, 1, :));
         rawS12 = squeeze(pairResult.reference_raw(1, 2, :));
         swS21 = squeeze(pairResult.reference_switch_corrected(2, 1, :));
@@ -187,6 +187,26 @@ end
 
 function values = local_mag_db(trace)
 values = 20 * log10(max(abs(trace), 1e-12));
+end
+
+function target = load_phase1_target_for_debug(config, geomKey, pairKey, bandName)
+switch upper(geomKey)
+    case 'STRAIGHT'
+        if strcmpi(pairKey, 'P3P4')
+            baseName = sprintf('EXTRACTED_THRU_P3P4_STRAIGHT_%s.mat', bandName);
+        else
+            baseName = sprintf('EXTRACTED_THRU_P1P2_STRAIGHT_%s.mat', bandName);
+        end
+    case 'ARC'
+        baseName = sprintf('EXTRACTED_THRU_P1P4_ARC_%s.mat', bandName);
+    case {'DIAG', 'DIAGONAL'}
+        baseName = sprintf('EXTRACTED_THRU_P1P4_DIAGONAL_%s.mat', bandName);
+    otherwise
+        error('Unsupported geometry %s for Phase I target lookup.', geomKey);
+end
+
+loaded = load(fullfile(config.phase1_output_mat_dir, baseName));
+target = loaded.reciprocalResult;
 end
 
 function save_debug_figure(fig, basePath)

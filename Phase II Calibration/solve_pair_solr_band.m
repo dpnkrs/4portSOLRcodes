@@ -39,18 +39,26 @@ for idxStd = 1:numel(stdNames)
     standardResiduals.(stdName) = nan(2, nFreq(freq));
 end
 
-gammaShort = interpolate_reference_gamma(referenceStandards.Short, freq);
-gammaOpen = interpolate_reference_gamma(referenceStandards.Open, freq);
-gammaLoad = interpolate_reference_gamma(referenceStandards.Load, freq);
+gammaShort = interpolate_reference_gamma(referenceStandards.Short, freq, bandName);
+gammaOpen = interpolate_reference_gamma(referenceStandards.Open, freq, bandName);
+gammaLoad = interpolate_reference_gamma(referenceStandards.Load, freq, bandName);
 
 errorTerms = calculate_error_terms_solr_from_gamma(freq, ...
     measPort1.Short, measPort1.Open, measPort1.Load, ...
     measPort2.Short, measPort2.Open, measPort2.Load, ...
     SthruSwitch, gammaShort, gammaOpen, gammaLoad, 0, config.branch_stabilization);
 
-phase1Target = load_phase1_thru_target(config, geomKey, pairKey, bandName);
-[errorTerms, anchorDiagnostics] = apply_transmission_anchor_if_enabled( ...
-    config, errorTerms, SthruSwitch, phase1Target);
+phase1Target = [];
+if phase1_thru_targets_enabled(config, bandName)
+    phase1Target = load_phase1_thru_target(config, geomKey, pairKey, bandName);
+    phase1Target = apply_reciprocal_target_normalization_if_enabled(config, phase1Target, bandName);
+    [errorTerms, anchorDiagnostics] = apply_transmission_anchor_if_enabled( ...
+        config, errorTerms, SthruSwitch, phase1Target);
+else
+    anchorDiagnostics = struct('enabled', false, 'mode', '', 'anchor_ratio', NaN, 'anchor_ratio_db', NaN, ...
+        'anchor_ratio_deg', NaN, 'median_pre_s21_db', NaN, 'median_pre_s12_db', NaN, ...
+        'median_target_s21_db', NaN, 'median_target_s12_db', NaN);
+end
 SthruCorrected = correct_network_from_error_terms(SthruSwitch, errorTerms, config.cal_den_floor);
 
 referenceMap = struct('Short', gammaShort, 'Open', gammaOpen, 'Load', gammaLoad);
@@ -98,8 +106,33 @@ pairResult.standards_corrected = correctedStandards;
 pairResult.standard_residuals = standardResiduals;
 end
 
-function gamma = interpolate_reference_gamma(reference, freq)
-gamma = interp1(reference.freq, reference.gamma, freq, 'pchip', 'extrap');
+function tf = phase1_thru_targets_enabled(config, bandName)
+tf = false;
+if isfield(config, 'transmission_anchor') && isfield(config.transmission_anchor, 'enabled') ...
+        && config.transmission_anchor.enabled
+    if ~isfield(config.transmission_anchor, 'bands') || isempty(config.transmission_anchor.bands) ...
+            || any(strcmpi(config.transmission_anchor.bands, bandName))
+        tf = true;
+        return;
+    end
+end
+if isfield(config, 'reciprocal_target_normalization') && isfield(config.reciprocal_target_normalization, 'enabled') ...
+        && config.reciprocal_target_normalization.enabled
+    if ~isfield(config.reciprocal_target_normalization, 'band') || isempty(config.reciprocal_target_normalization.band) ...
+            || strcmpi(config.reciprocal_target_normalization.band, bandName)
+        tf = true;
+    end
+end
+end
+
+function gamma = interpolate_reference_gamma(reference, freq, bandName)
+if isfield(reference, 'bands')
+    bandKey = matlab.lang.makeValidName(strrep(bandName, '-', '_'));
+    source = reference.bands.(bandKey);
+else
+    source = reference;
+end
+gamma = interp1(source.freq, source.gamma, freq, 'pchip', 'extrap');
 end
 
 function corrected = correct_network_from_error_terms(Sraw, errorTerms, denominatorFloor)
@@ -127,6 +160,22 @@ end
 
 loaded = load(fullfile(config.phase1_output_mat_dir, baseName));
 target = loaded.reciprocalResult;
+target.band = bandName;
+end
+
+function target = apply_reciprocal_target_normalization_if_enabled(config, target, bandName)
+if ~isfield(config, 'reciprocal_target_normalization') || ~config.reciprocal_target_normalization.enabled
+    return;
+end
+if ~strcmpi(config.reciprocal_target_normalization.band, bandName)
+    return;
+end
+ratio = config.reciprocal_target_normalization.ratio;
+if ~isfinite(real(ratio)) || ~isfinite(imag(ratio)) || abs(ratio) < 1e-12
+    return;
+end
+target.S(2, 1, :) = target.S(2, 1, :) .* ratio;
+target.S(1, 2, :) = target.S(1, 2, :) .* ratio;
 end
 
 function [errorTerms, diagnostics] = apply_transmission_anchor_if_enabled(config, errorTerms, Sswitch, phase1Target)
@@ -136,6 +185,11 @@ diagnostics = struct('enabled', false, 'mode', '', 'anchor_ratio', NaN, 'anchor_
 
 if ~isfield(config, 'transmission_anchor') || ~config.transmission_anchor.enabled
     return;
+end
+if isfield(config.transmission_anchor, 'bands') && ~isempty(config.transmission_anchor.bands)
+    if ~any(strcmpi(config.transmission_anchor.bands, phase1Target.band))
+        return;
+    end
 end
 
 Spre = correct_network_from_error_terms(Sswitch, errorTerms, config.cal_den_floor);

@@ -22,7 +22,7 @@ for idxPort = 1:numel(portLabels)
     debugData.(portName) = struct();
     for idxStd = 1:numel(stdNames)
         stdName = stdNames{idxStd};
-        [stitchedFreqGHz, stitchedMagDb, stitchedPhaseDeg] = local_prepare_stitched_trace(referenceStandards.(stdName));
+        [stitchedFreqGHz, stitchedMagDb, stitchedPhaseDeg] = local_prepare_reference_trace(referenceStandards.(stdName), config.bands);
 
         axMag = nexttile((idxStd - 1) * 2 + 1);
         hold(axMag, 'on');
@@ -50,9 +50,7 @@ for idxPort = 1:numel(portLabels)
             rawNet = read_touchstone_nport(rawFile);
             gammaMeasured = squeeze(rawNet.S(portIdx, portIdx, :));
             gammaMeasured = gammaMeasured(:);
-            gammaReference = interp1(referenceStandards.(stdName).freq(:), referenceStandards.(stdName).gamma(:), ...
-                rawNet.freq(:), 'pchip', 'extrap');
-            gammaReference = gammaReference(:);
+            gammaReference = local_interpolate_reference_gamma(referenceStandards.(stdName), rawNet.freq(:), bandName);
 
             freqGHz = rawNet.freq(:) / 1e9;
             magMeasuredDb = 20 * log10(max(abs(gammaMeasured), 1e-12));
@@ -100,10 +98,34 @@ save(fullfile(config.interim_mat_dir, 'PHASE2_DEBUG_REF_IMPORT.mat'), 'debugData
 local_write_text_file(fullfile(config.interim_note_dir, 'PhaseII_Debug_RefImport_Summary.txt'), noteLines);
 end
 
-function [freqGHz, magDb, phaseDeg] = local_prepare_stitched_trace(reference)
-freqGHz = reference.freq(:) / 1e9;
-magDb = 20 * log10(max(abs(reference.gamma(:)), 1e-12));
-phaseDeg = unwrap(angle(reference.gamma(:))) * 180 / pi;
+function [freqGHz, magDb, phaseDeg] = local_prepare_reference_trace(reference, bandNames)
+if isfield(reference, 'bands')
+    freq = [];
+    gamma = [];
+    for idxBand = 1:numel(bandNames)
+        bandKey = matlab.lang.makeValidName(strrep(bandNames{idxBand}, '-', '_'));
+        bandRef = reference.bands.(bandKey);
+        freq = [freq; bandRef.freq(:)]; %#ok<AGROW>
+        gamma = [gamma; bandRef.gamma(:)]; %#ok<AGROW>
+    end
+else
+    freq = reference.freq(:);
+    gamma = reference.gamma(:);
+end
+freqGHz = freq / 1e9;
+magDb = 20 * log10(max(abs(gamma), 1e-12));
+phaseDeg = unwrap(angle(gamma)) * 180 / pi;
+end
+
+function gammaReference = local_interpolate_reference_gamma(reference, freq, bandName)
+if isfield(reference, 'bands')
+    bandKey = matlab.lang.makeValidName(strrep(bandName, '-', '_'));
+    source = reference.bands.(bandKey);
+else
+    source = reference;
+end
+gammaReference = interp1(source.freq(:), source.gamma(:), freq, 'pchip', 'extrap');
+gammaReference = gammaReference(:);
 end
 
 function phaseAligned = local_align_phase_branch(phaseMeasured, phaseReference)

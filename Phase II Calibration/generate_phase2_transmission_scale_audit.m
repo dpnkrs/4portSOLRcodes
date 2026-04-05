@@ -110,17 +110,18 @@ for idxPair = 1:numel(pairs)
 
         freq = pairResult.freq(:);
         freqGHz = freq / 1e9;
-        gammaShort = interpolate_reference_gamma(referenceStandards.Short, freq);
-        gammaOpen = interpolate_reference_gamma(referenceStandards.Open, freq);
-        gammaLoad = interpolate_reference_gamma(referenceStandards.Load, freq);
+        gammaShort = interpolate_reference_gamma(referenceStandards.Short, freq, bandResults{idxBand}.band);
+        gammaOpen = interpolate_reference_gamma(referenceStandards.Open, freq, bandResults{idxBand}.band);
+        gammaLoad = interpolate_reference_gamma(referenceStandards.Load, freq, bandResults{idxBand}.band);
         legacyTerms = calculate_error_terms_solr_legacy_form_from_gamma(freq, ...
             pairResult.standards_measured_port1.Short(:), pairResult.standards_measured_port1.Open(:), pairResult.standards_measured_port1.Load(:), ...
             pairResult.standards_measured_port2.Short(:), pairResult.standards_measured_port2.Open(:), pairResult.standards_measured_port2.Load(:), ...
             pairResult.reference_switch_corrected, gammaShort, gammaOpen, gammaLoad, 0);
         legacyCorrected = correct_network_from_error_terms(pairResult.reference_switch_corrected, legacyTerms, config.cal_den_floor);
 
-        targetS21 = squeeze(pairResult.reference_phase1_target.S(2, 1, :));
-        targetS12 = squeeze(pairResult.reference_phase1_target.S(1, 2, :));
+        phase1Target = load_phase1_target_for_debug(config, geomKey, pairKey, bandResults{idxBand}.band);
+        targetS21 = squeeze(phase1Target.S(2, 1, :));
+        targetS12 = squeeze(phase1Target.S(1, 2, :));
         switchS21 = squeeze(pairResult.reference_switch_corrected(2, 1, :));
         switchS12 = squeeze(pairResult.reference_switch_corrected(1, 2, :));
         localS21 = squeeze(pairResult.reference_corrected(2, 1, :));
@@ -169,7 +170,7 @@ for idxPair = 1:numel(pairs)
         bandDebug.legacy_terms = legacyTerms;
         bandDebug.local_corrected = pairResult.reference_corrected;
         bandDebug.legacy_corrected = legacyCorrected;
-        bandDebug.target = pairResult.reference_phase1_target;
+        bandDebug.target = phase1Target;
         bandDebug.metrics = struct( ...
             'median_switch_s21_db', median(local_mag_db(switchS21), 'omitnan'), ...
             'median_target_s21_db', median(local_mag_db(targetS21), 'omitnan'), ...
@@ -219,8 +220,34 @@ for idx = 1:numel(bandResult.reference_pair_results)
 end
 end
 
-function gamma = interpolate_reference_gamma(reference, freq)
-gamma = interp1(reference.freq, reference.gamma, freq, 'pchip', 'extrap');
+function gamma = interpolate_reference_gamma(reference, freq, bandName)
+if isfield(reference, 'bands')
+    bandKey = matlab.lang.makeValidName(strrep(bandName, '-', '_'));
+    source = reference.bands.(bandKey);
+else
+    source = reference;
+end
+gamma = interp1(source.freq, source.gamma, freq, 'pchip', 'extrap');
+end
+
+function target = load_phase1_target_for_debug(config, geomKey, pairKey, bandName)
+switch upper(geomKey)
+    case 'STRAIGHT'
+        if strcmpi(pairKey, 'P3P4')
+            baseName = sprintf('EXTRACTED_THRU_P3P4_STRAIGHT_%s.mat', bandName);
+        else
+            baseName = sprintf('EXTRACTED_THRU_P1P2_STRAIGHT_%s.mat', bandName);
+        end
+    case 'ARC'
+        baseName = sprintf('EXTRACTED_THRU_P1P4_ARC_%s.mat', bandName);
+    case {'DIAG', 'DIAGONAL'}
+        baseName = sprintf('EXTRACTED_THRU_P1P4_DIAGONAL_%s.mat', bandName);
+    otherwise
+        error('Unsupported geometry %s for Phase I target lookup.', geomKey);
+end
+
+loaded = load(fullfile(config.phase1_output_mat_dir, baseName));
+target = loaded.reciprocalResult;
 end
 
 function corrected = correct_network_from_error_terms(Sraw, errorTerms, denominatorFloor)

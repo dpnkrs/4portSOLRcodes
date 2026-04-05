@@ -1,7 +1,9 @@
-function results = run_phase2_solr()
+function results = run_phase2_solr(config)
 %RUN_PHASE2_SOLR Orchestrate downstream Phase II bandwise SOLR calibration.
 
-config = phase2_config();
+if nargin < 1 || isempty(config)
+    config = phase2_config();
+end
 ensure_output_dirs(config);
 apply_plot_defaults();
 
@@ -33,6 +35,7 @@ generate_phase2_error_term_debug(config, results.bands);
 generate_phase2_port_reflection_debug(config, results.bands, referenceStandards);
 generate_phase2_transmission_scale_audit(config, results.bands, referenceStandards);
 generate_phase2_thru_target_consistency_debug(config, results.bands);
+generate_phase2_midband_arc_debug(config, results.bands);
 save_phase2_outputs(config, results);
 write_phase2_walkthrough(config, results);
 
@@ -308,9 +311,30 @@ stdNames = fieldnames(config.reference_standard_files);
 referenceStandards = struct();
 for idx = 1:numel(stdNames)
     stdName = stdNames{idx};
-    loaded = load(config.reference_standard_files.(stdName));
-    fitOut = loaded.fitOut;
-    referenceStandards.(stdName) = struct('freq', fitOut.freq(:), 'gamma', fitOut.gamma_fit(:));
+    switch lower(config.reference_standard_mode)
+        case 'stitched_final'
+            loaded = load(config.reference_standard_files.(stdName));
+            fitOut = loaded.fitOut;
+            referenceStandards.(stdName) = struct( ...
+                'mode', 'stitched_final', ...
+                'freq', fitOut.freq(:), ...
+                'gamma', fitOut.gamma_fit(:));
+        case 'bandwise_final'
+            bandwise = struct();
+            for idxBand = 1:numel(config.bands)
+                bandName = config.bands{idxBand};
+                loaded = load(fullfile(config.phase1_output_mat_dir, sprintf('FINALFIT_%s_%s.mat', upper(stdName), bandName)));
+                finalResult = loaded.finalResult;
+                bandwise.(matlab.lang.makeValidName(strrep(bandName, '-', '_'))) = struct( ...
+                    'freq', finalResult.freq(:), ...
+                    'gamma', finalResult.(config.reference_bandwise_field)(:), ...
+                    'winner_port', finalResult.winner_port, ...
+                    'winner_output_key', finalResult.winner_output_key);
+            end
+            referenceStandards.(stdName) = struct('mode', 'bandwise_final', 'bands', bandwise);
+        otherwise
+            error('Unsupported reference_standard_mode: %s', config.reference_standard_mode);
+    end
 end
 end
 

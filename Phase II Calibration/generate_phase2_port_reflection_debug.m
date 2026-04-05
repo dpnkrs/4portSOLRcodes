@@ -54,9 +54,9 @@ for idxBand = 1:numel(bandResults)
 
         freq = pairResult.freq(:);
         refs = struct( ...
-            'Open', interpolate_reference_gamma(referenceStandards.Open, freq), ...
-            'Short', interpolate_reference_gamma(referenceStandards.Short, freq), ...
-            'Load', interpolate_reference_gamma(referenceStandards.Load, freq));
+            'Open', interpolate_reference_gamma(referenceStandards.Open, freq, bandResult.band), ...
+            'Short', interpolate_reference_gamma(referenceStandards.Short, freq, bandResult.band), ...
+            'Load', interpolate_reference_gamma(referenceStandards.Load, freq, bandResult.band));
 
         measPort1 = pairResult.standards_measured_port1;
         measPort2 = pairResult.standards_measured_port2;
@@ -152,8 +152,8 @@ legendAxes = gobjects(1, 1);
 
 for idxStd = 1:numel(stdNames)
     stdName = stdNames{idxStd};
-    refFreqGHz = referenceStandards.(stdName).freq(:) / 1e9;
-    refGamma = referenceStandards.(stdName).gamma(:);
+    [refFreq, refGamma] = flatten_reference_trace(referenceStandards.(stdName), config.bands);
+    refFreqGHz = refFreq(:) / 1e9;
 
     axMag = nexttile(tlo);
     hold(axMag, 'on');
@@ -176,7 +176,7 @@ for idxStd = 1:numel(stdNames)
     plot(axPh, refFreqGHz, unwrap(angle(refGamma)) * 180 / pi, 'k-', 'LineWidth', 2.0);
 
     if ~legendReady
-        legendLabels{1} = sprintf('%s stitched Phase I reference', stdName);
+        legendLabels{1} = sprintf('%s Phase I reference', stdName);
         legendAxes = axMag;
     end
 
@@ -202,7 +202,7 @@ for idxEntry = 1:numel(entries)
 end
 lgd = legend(legendAxes, legendHandles, legendLabels, 'Location', 'eastoutside');
 set(lgd, 'Interpreter', 'none');
-title(tlo, sprintf('Phase II reflection inputs vs stitched Phase I references - %s', portLabel));
+title(tlo, sprintf('Phase II reflection inputs vs Phase I references - %s', portLabel));
 end
 
 function fig = create_sensitivity_figure(config, portLabel, entries)
@@ -370,8 +370,30 @@ end
 ranking = ranking(order);
 end
 
-function gamma = interpolate_reference_gamma(reference, freq)
-gamma = interp1(reference.freq(:), reference.gamma(:), freq, 'pchip', 'extrap');
+function [freq, gamma] = flatten_reference_trace(reference, bandNames)
+if isfield(reference, 'bands')
+    freq = [];
+    gamma = [];
+    for idxBand = 1:numel(bandNames)
+        bandKey = matlab.lang.makeValidName(strrep(bandNames{idxBand}, '-', '_'));
+        refBand = reference.bands.(bandKey);
+        freq = [freq; refBand.freq(:)]; %#ok<AGROW>
+        gamma = [gamma; refBand.gamma(:)]; %#ok<AGROW>
+    end
+else
+    freq = reference.freq(:);
+    gamma = reference.gamma(:);
+end
+end
+
+function gamma = interpolate_reference_gamma(reference, freq, bandName)
+if isfield(reference, 'bands')
+    bandKey = matlab.lang.makeValidName(strrep(bandName, '-', '_'));
+    source = reference.bands.(bandKey);
+else
+    source = reference;
+end
+gamma = interp1(source.freq(:), source.gamma(:), freq, 'pchip', 'extrap');
 end
 
 function phaseDeg = align_phase_to_reference(trace, ref)
